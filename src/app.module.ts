@@ -5,12 +5,13 @@ import { ConfigModule } from '@nestjs/config';
 import { mainConfig } from './config/main.config';
 import { authConfig } from './config/auth.config';
 import { swaggerConfig } from './config/swagger.config';
+import { mailsConfig } from './config/mails.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [mainConfig, authConfig, swaggerConfig],
+      load: [mainConfig, authConfig, swaggerConfig, mailsConfig],
     }),
     UsersModule,
     AuthModule,

@@ -4,10 +4,15 @@ import { UsersService } from 'src/users/users.service';
 import { RegisterUserDto } from './dto/register-user.input';
 import { compareSync, hashSync } from 'bcrypt';
 import { Profile } from 'passport';
+import { MailsService } from 'src/mails/mails.service';
+import { welcomeTemplate } from 'src/mails/templates/auth/welcome';
 
 @Injectable()
 export class AuthService {
-  constructor(private usersService: UsersService) {}
+  constructor(
+    private usersService: UsersService,
+    private mailsService: MailsService,
+  ) {}
 
   async register(data: RegisterUserDto) {
     const passwordHash = hashSync(data.password, 10);
@@ -18,6 +23,7 @@ export class AuthService {
         lastName: data.lastName,
         password: passwordHash,
       });
+      this.mailsService.sendMail(data.email, welcomeTemplate(data.email));
       return user;
     } catch (error) {
       if (error.code == 'P2002') throw new ConflictException();
