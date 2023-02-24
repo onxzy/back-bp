@@ -1,0 +1,17 @@
+version: "3.9"
+name: back-bp
+services:
+  db:
+    image: postgres
+    restart: always
+    volumes: 
+      - db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - POSTGRES_USER=${DATABASE_USER}
+      - POSTGRES_DB=${DATABASE_NAME}
+    ports:
+      - "${DATABASE_PORT}:5432"
+
+volumes:
+  db:
