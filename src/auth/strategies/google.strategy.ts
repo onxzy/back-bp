@@ -4,16 +4,15 @@ import { Injectable, NotAcceptableException } from '@nestjs/common';
 import { AuthService } from '../auth.service';
 import { Profile } from 'passport';
 import { Provider } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy) {
-  constructor(private authService: AuthService) {
-    super({
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: `${process.env.API_URL}/auth/google`,
-      scope: ['email', 'profile'],
-    });
+  constructor(
+    private configService: ConfigService,
+    private authService: AuthService,
+  ) {
+    super(configService.get('auth.google'));
   }
 
   async validate(

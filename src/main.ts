@@ -4,20 +4,19 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import * as session from 'express-session';
 import * as passport from 'passport';
-import { config as dotenv } from 'dotenv';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
-  dotenv();
-
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
 
   const config = new DocumentBuilder()
-    .setTitle('Back BP')
-    .setDescription('Backend Boilerplate')
-    .setVersion('1.0')
+    .setTitle(configService.get('swagger.title'))
+    .setDescription(configService.get('swagger.description'))
+    .setVersion(configService.get('swagger.version'))
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('doc', app, document);
+  SwaggerModule.setup(configService.get('swagger.swaggerPath'), app, document);
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -27,18 +26,11 @@ async function bootstrap() {
     }),
   );
 
-  app.use(
-    session({
-      name: process.env.SESSION_COOKIE_NAME || 'connect.sid',
-      secret: process.env.SESSION_SECRET || 'session-secret',
-      resave: false,
-      saveUninitialized: false,
-    }), // FIXME: Session store
-  );
+  app.use(session(configService.get('session')));
 
   app.use(passport.initialize());
   app.use(passport.session());
 
-  await app.listen(3000);
+  await app.listen(configService.get('port'));
 }
 bootstrap();

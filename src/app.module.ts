@@ -1,9 +1,20 @@
 import { Module } from '@nestjs/common';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { ConfigModule } from '@nestjs/config';
+import { mainConfig } from './config/main.config';
+import { authConfig } from './config/auth.config';
+import { swaggerConfig } from './config/swagger.config';
 
 @Module({
-  imports: [UsersModule, AuthModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [mainConfig, authConfig, swaggerConfig],
+    }),
+    UsersModule,
+    AuthModule,
+  ],
   controllers: [],
   providers: [],
 })
