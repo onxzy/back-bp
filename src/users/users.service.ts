@@ -1,10 +1,20 @@
-import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import {
+  ConflictException,
+  GoneException,
+  Injectable,
+  NotAcceptableException,
+  NotFoundException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Prisma, TokenType } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private configService: ConfigService,
+  ) {}
 
   create(data: Prisma.UserCreateInput) {
     return this.prisma.user.create({ data });
@@ -58,5 +68,53 @@ export class UsersService {
 
   delete(where: Prisma.UserWhereUniqueInput) {
     return this.prisma.user.delete({ where });
+  }
+
+  async createUserToken(userId: string, type: TokenType) {
+    const expiration = new Date();
+    expiration.setSeconds(
+      expiration.getSeconds() +
+        this.configService.get('auth.verificationTokenExpiration'),
+    );
+
+    try {
+      const token = await this.prisma.user_Tokens.create({
+        data: { userId, expiration, type },
+      });
+      return { expiration, token };
+    } catch (error) {
+      if (error.code == 'P2002')
+        throw new ConflictException(
+          'A token of this type for this user already exists',
+        );
+      throw error;
+    }
+  }
+
+  async verifyUser(tokenId: string) {
+    const token = await this.checkUserToken(tokenId, TokenType.verification);
+    if (token.user.isVerified)
+      throw new ConflictException('User is already verified');
+
+    await this.prisma.user.update({
+      where: { id: token.userId },
+      data: { isVerified: true },
+    });
+  }
+
+  async checkUserToken(id: string, type: TokenType) {
+    const token = await this.prisma.user_Tokens.findUnique({
+      where: { id },
+      include: { user: true },
+    });
+    if (!token) throw new NotFoundException();
+    if (token.type != type) throw new NotAcceptableException('Bad token type');
+
+    this.prisma.user_Tokens.delete({ where: { id } });
+
+    const expiration = new Date(token.expiration);
+    if (expiration < new Date()) throw new GoneException('Token expired');
+
+    return token;
   }
 }

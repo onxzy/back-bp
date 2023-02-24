@@ -1,17 +1,24 @@
-import { ConflictException, Injectable } from '@nestjs/common';
-import { Provider, User } from '@prisma/client';
+import {
+  ConflictException,
+  Injectable,
+  NotAcceptableException,
+} from '@nestjs/common';
+import { Provider, TokenType, User } from '@prisma/client';
 import { UsersService } from 'src/users/users.service';
 import { RegisterUserDto } from './dto/register-user.input';
 import { compareSync, hashSync } from 'bcrypt';
 import { Profile } from 'passport';
 import { MailsService } from 'src/mails/mails.service';
 import { welcomeTemplate } from 'src/mails/templates/auth/welcome';
+import { accountVerificationTemplate } from 'src/mails/templates/auth/accountVerification';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private mailsService: MailsService,
+    private configService: ConfigService,
   ) {}
 
   async register(data: RegisterUserDto) {
@@ -23,7 +30,7 @@ export class AuthService {
         lastName: data.lastName,
         password: passwordHash,
       });
-      this.mailsService.sendMail(data.email, welcomeTemplate(data.email));
+      await this.initVerification(user);
       return user;
     } catch (error) {
       if (error.code == 'P2002') throw new ConflictException();
@@ -47,10 +54,35 @@ export class AuthService {
         provider: profile.provider as Provider,
         isVerified: true,
       });
+      this.mailsService.sendMail(user.email, welcomeTemplate(user.firstName));
       return user;
     } catch (error) {
       if (error.code == 'P2002') throw new ConflictException();
       throw error;
     }
+  }
+
+  async initVerification(user: User) {
+    if (user.provider != Provider.email)
+      throw new NotAcceptableException('User provider is not email');
+    if (user.isVerified)
+      throw new ConflictException('User is already verified');
+
+    const { token } = await this.usersService.createUserToken(
+      user.id,
+      TokenType.verification,
+    );
+
+    await this.mailsService.sendMail(
+      user.email,
+      accountVerificationTemplate(
+        user.firstName,
+        `${this.configService.get('apiUrl')}/auth/verify/${token.id}`,
+      ),
+    );
+  }
+
+  verification(id: string) {
+    return this.usersService.verifyUser(id);
   }
 }

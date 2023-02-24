@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Param,
   Post,
   Redirect,
   Req,
@@ -70,5 +71,17 @@ export class AuthController {
     session.destroy((err) => {
       throw err;
     });
+  }
+
+  @Post('/verify/email')
+  @UseGuards(AuthenticatedGuard)
+  verifyEmail(@Req() req: Request) {
+    return this.authService.initVerification(req.user);
+  }
+
+  @Get('/verify/:tokenId')
+  async verifyUser(@Param('tokenId') id: string) {
+    await this.authService.verification(id);
+    return 'Verified !'; // TODO: Replace with client redirection
   }
 }

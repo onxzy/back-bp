@@ -11,7 +11,8 @@ export class MailsService {
     this.mailTransporter = createTransport(configService.get('mails'));
   }
 
-  sendMail(to: string, msg: MailTemplateReady) {
-    return this.mailTransporter.sendMail({ to, ...msg });
+  async sendMail(to: string, msg: MailTemplateReady) {
+    const infos = await this.mailTransporter.sendMail({ to, ...msg });
+    return infos.messageId as boolean;
   }
 }
