@@ -4,8 +4,11 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import * as session from 'express-session';
 import * as passport from 'passport';
+import { config as dotenv } from 'dotenv';
 
 async function bootstrap() {
+  dotenv();
+
   const app = await NestFactory.create(AppModule);
 
   const config = new DocumentBuilder()
@@ -26,10 +29,11 @@ async function bootstrap() {
 
   app.use(
     session({
-      secret: 'my-secret', // FIXME:
+      name: process.env.SESSION_COOKIE_NAME || 'connect.sid',
+      secret: process.env.SESSION_SECRET || 'session-secret',
       resave: false,
       saveUninitialized: false,
-    }),
+    }), // FIXME: Session store
   );
 
   app.use(passport.initialize());

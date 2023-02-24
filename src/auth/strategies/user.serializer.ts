@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PassportSerializer } from '@nestjs/passport';
 import { User } from '@prisma/client';
+import { VerifyCallback } from 'passport-google-oauth2';
 import { UsersService } from 'src/users/users.service';
 
 @Injectable()
@@ -9,11 +10,11 @@ export class UserSerializer extends PassportSerializer {
     super();
   }
 
-  serializeUser(user: User, done: (err: any, id: string) => void) {
+  serializeUser(user: User, done: VerifyCallback) {
     done(null, user.id);
   }
 
-  async deserializeUser(id: string, done: (err: any, user: User) => void) {
+  async deserializeUser(id: string, done: VerifyCallback) {
     const user = await this.usersService.findUnique({ id });
 
     if (!user) {

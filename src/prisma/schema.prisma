@@ -15,6 +15,11 @@ enum Role {
   ADMIN
 }
 
+enum Provider {
+  email
+  google
+}
+
 model User {
   id          String    @id @unique @default(uuid())
   email       String    @unique
@@ -23,5 +28,7 @@ model User {
   lastName    String
   isVerified  Boolean   @default(false)
 
-  roles       Role[]      @default([USER])
+  roles       Role[]    @default([USER])
+
+  provider    Provider  @default(email)
 }

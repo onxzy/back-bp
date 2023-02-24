@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Role } from '@prisma/client';
+import { Provider, Role } from '@prisma/client';
 import { IsEmail, IsIn, IsOptional, IsString, Length } from 'class-validator';
 
 export class FindUsersDto {
@@ -24,4 +24,9 @@ export class FindUsersDto {
   @IsOptional()
   @IsIn(Object.values(Role))
   roles?: Role[];
+
+  @ApiPropertyOptional({ enum: Provider })
+  @IsOptional()
+  @IsIn(Object.values(Provider))
+  provider?: Provider;
 }

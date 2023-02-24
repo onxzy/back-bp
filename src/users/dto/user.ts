@@ -1,5 +1,5 @@
-import { ApiProperty, ApiTags } from '@nestjs/swagger';
-import { Role } from '@prisma/client';
+import { ApiProperty } from '@nestjs/swagger';
+import { Provider, Role } from '@prisma/client';
 
 export class UserDto {
   @ApiProperty()
@@ -19,4 +19,7 @@ export class UserDto {
 
   @ApiProperty({ enum: Role, isArray: true })
   roles: Role[];
+
+  @ApiProperty({ enum: Provider })
+  provider: Provider;
 }

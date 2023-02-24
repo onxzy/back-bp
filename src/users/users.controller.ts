@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Role } from '@prisma/client';
-import { ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/create-user.input';
 import { AuthenticatedGuard } from 'src/auth/guards/authenticated.guard';
 import { Roles } from 'src/auth/strategies/role.decorator';

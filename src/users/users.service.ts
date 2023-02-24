@@ -10,6 +10,14 @@ export class UsersService {
     return this.prisma.user.create({ data });
   }
 
+  findOrCreate(data: Prisma.UserCreateInput) {
+    return this.prisma.user.upsert({
+      where: { email: data.email },
+      update: {},
+      create: data,
+    });
+  }
+
   findMany(where?: Prisma.UserWhereInput) {
     return this.prisma.user.findMany({
       where,
@@ -20,6 +28,7 @@ export class UsersService {
         lastName: true,
         isVerified: true,
         roles: true,
+        provider: true,
       },
     });
   }
@@ -35,6 +44,7 @@ export class UsersService {
         lastName: true,
         isVerified: true,
         roles: true,
+        provider: true,
       },
     });
   }

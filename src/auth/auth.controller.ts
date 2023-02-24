@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Post,
+  Redirect,
   Req,
   Session,
   UseGuards,
@@ -12,9 +13,9 @@ import { RegisterUserDto } from './dto/register-user.input';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import {
-  ApiBody,
   ApiCreatedResponse,
   ApiOkResponse,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { LoginUserDto } from './dto/login-user.input';
@@ -22,6 +23,7 @@ import { AuthenticatedGuard } from './guards/authenticated.guard';
 import { Request } from 'express';
 import { Session as ExpressSession } from 'express-session';
 import { UserDto } from 'src/users/dto/user';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -33,20 +35,20 @@ export class AuthController {
     return this.authService.register(data);
   }
 
-  @Post('login')
+  @Get('login')
   @UseGuards(LocalAuthGuard)
-  @ApiBody({ type: LoginUserDto })
+  @ApiQuery({ type: LoginUserDto })
   @ApiCreatedResponse({ type: UserDto })
-  login(@Req() req: Request): UserDto {
-    return {
-      id: req.user.id,
-      email: req.user.email,
-      firstName: req.user.firstName,
-      lastName: req.user.lastName,
-      isVerified: req.user.isVerified,
-      roles: req.user.roles,
-    };
-  }
+  @Redirect('/auth')
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  login() {}
+
+  @Get('google')
+  @UseGuards(GoogleAuthGuard)
+  @ApiOkResponse({ type: UserDto })
+  @Redirect('/auth')
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  googleAuth() {}
 
   @Get()
   @UseGuards(AuthenticatedGuard)
@@ -59,6 +61,7 @@ export class AuthController {
       lastName: req.user.lastName,
       isVerified: req.user.isVerified,
       roles: req.user.roles,
+      provider: req.user.provider,
     };
   }
 
