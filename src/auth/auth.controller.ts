@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Redirect,
   Req,
@@ -25,6 +26,7 @@ import { Request } from 'express';
 import { Session as ExpressSession } from 'express-session';
 import { UserDto } from 'src/users/dto/user';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
+import { RecoverPasswordDto } from './dto/recover-password.input';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -47,7 +49,7 @@ export class AuthController {
   @Get('google')
   @UseGuards(GoogleAuthGuard)
   @ApiOkResponse({ type: UserDto })
-  @Redirect('/auth')
+  @Redirect('/auth') // TODO: Replace with client redirection
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   googleAuth() {}
 
@@ -79,9 +81,22 @@ export class AuthController {
     return this.authService.initVerification(req.user);
   }
 
-  @Get('/verify/:tokenId')
-  async verifyUser(@Param('tokenId') id: string) {
+  @Get('/verify/:token')
+  async verifyUser(@Param('token') id: string) {
     await this.authService.verification(id);
     return 'Verified !'; // TODO: Replace with client redirection
+  }
+
+  @Post('/recover/:email')
+  initRecoverPassword(@Param('email') email: string) {
+    return this.authService.initRecoverPassword(email);
+  }
+
+  @Patch('/password/:token')
+  recoverPassword(
+    @Param('token') id: string,
+    @Body() data: RecoverPasswordDto,
+  ) {
+    return this.authService.recoverPassword(id, data.email, data.password);
   }
 }

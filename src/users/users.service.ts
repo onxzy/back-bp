@@ -117,4 +117,15 @@ export class UsersService {
 
     return token;
   }
+
+  async recoverPassword(tokenId: string, email: string, password: string) {
+    const token = await this.checkUserToken(tokenId, TokenType.passwordReset);
+    if (token.user.email != email)
+      throw new NotAcceptableException('Token and email not matching');
+
+    await this.prisma.user.update({
+      where: { id: token.userId },
+      data: { password },
+    });
+  }
 }
