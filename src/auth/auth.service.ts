@@ -120,4 +120,9 @@ export class AuthService {
   recoverPassword(id: string, email: string, password: string) {
     return this.usersService.recoverPassword(id, email, password);
   }
+
+  leave(id: string, user: User) {
+    if (id == user.id) return this.usersService.delete(id);
+    else return false;
+  }
 }

@@ -87,8 +87,9 @@ export class UsersService {
     });
   }
 
-  delete(where: Prisma.UserWhereUniqueInput) {
-    return this.prisma.user.delete({ where });
+  delete(id: string) {
+    // Place user delete loggic here
+    return this.prisma.user.delete({ where: { id } });
   }
 
   async createUserToken(userId: string, type: TokenType) {

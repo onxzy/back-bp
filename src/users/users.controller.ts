@@ -91,7 +91,7 @@ export class UsersController {
   @UseGuards(AuthenticatedGuard, RolesGuard)
   async remove(@Param('id') id: string) {
     try {
-      return await this.usersService.delete({ id });
+      return await this.usersService.delete(id);
     } catch (error) {
       if (error.code == 'P2025') throw new NotFoundException();
       throw error;

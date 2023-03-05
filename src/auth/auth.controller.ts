@@ -17,12 +17,7 @@ import {
 import { RegisterUserDto } from './dto/register-user.input';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import {
-  ApiCreatedResponse,
-  ApiOkResponse,
-  ApiQuery,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiOkResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { LoginUserDto } from './dto/login-user.input';
 import { AuthenticatedGuard } from './guards/authenticated.guard';
 import { Request, Response } from 'express';
@@ -118,5 +113,11 @@ export class AuthController {
     @Body() data: RecoverPasswordDto,
   ) {
     return this.authService.recoverPassword(id, data.email, data.password);
+  }
+
+  @Delete('/leave')
+  @UseGuards(AuthenticatedGuard)
+  leave(@Param('id') id: string, @Req() req: Request) {
+    return this.authService.leave(id, req.user);
   }
 }
