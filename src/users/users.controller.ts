@@ -15,11 +15,12 @@ import { UsersService } from './users.service';
 import { Role } from '@prisma/client';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/create-user.input';
-import { AuthenticatedGuard } from 'src/auth/guards/authenticated.guard';
-import { Roles } from 'src/auth/strategies/role.decorator';
-import { RolesGuard } from 'src/auth/guards/role.guard';
+import { AuthenticatedGuard } from '../auth/guards/authenticated.guard';
+import { Roles } from '../auth/strategies/role.decorator';
+import { RolesGuard } from '../auth/guards/role.guard';
 import { FindUsersDto } from './dto/find-users.input';
 import { UserDto } from './dto/user';
+import { UpdateUserDto } from './dto/update-user.input';
 
 @ApiTags('Users')
 @Controller('users')
@@ -73,15 +74,27 @@ export class UsersController {
     return user;
   }
 
-  // @Patch(':id')
-  // @UseGuards(AuthenticatedGuard)
-  // update(@Param('id') id: string, @Body() data: Prisma.UserUpdateInput) {
-  //   return this.usersService.update({ id }, data);
-  // }
+  @Patch(':id')
+  @Roles(Role.ADMIN)
+  @UseGuards(AuthenticatedGuard, RolesGuard)
+  async update(@Param('id') id: string, @Body() data: UpdateUserDto) {
+    try {
+      return await this.usersService.update({ id }, data);
+    } catch (error) {
+      if (error.code == 'P2025') throw new NotFoundException();
+      throw error;
+    }
+  }
 
-  // @Delete(':id')
-  // @UseGuards(AuthenticatedGuard)
-  // remove(@Param('id') id: string) {
-  //   return this.usersService.delete({ id });
-  // }
+  @Delete(':id')
+  @Roles(Role.ADMIN)
+  @UseGuards(AuthenticatedGuard, RolesGuard)
+  async remove(@Param('id') id: string) {
+    try {
+      return await this.usersService.delete({ id });
+    } catch (error) {
+      if (error.code == 'P2025') throw new NotFoundException();
+      throw error;
+    }
+  }
 }

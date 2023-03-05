@@ -6,12 +6,13 @@ import { mainConfig } from './config/main.config';
 import { authConfig } from './config/auth.config';
 import { swaggerConfig } from './config/swagger.config';
 import { mailsConfig } from './config/mails.config';
+import { clientConfig } from './config/client.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [mainConfig, authConfig, swaggerConfig, mailsConfig],
+      load: [mainConfig, authConfig, swaggerConfig, mailsConfig, clientConfig],
     }),
     UsersModule,
     AuthModule,

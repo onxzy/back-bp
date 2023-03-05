@@ -28,6 +28,10 @@ model User {
   lastName    String
   isVerified  Boolean   @default(false)
 
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt @default(now())
+  loggedInAt  DateTime  @default(now())
+
   roles       Role[]    @default([USER])
 
   provider    Provider  @default(email)
@@ -46,4 +50,7 @@ model User_Tokens {
   userId      String    // FIXME: Unique constraint on userId & type
   type        TokenType
   expiration  DateTime
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt @default(now())
 }

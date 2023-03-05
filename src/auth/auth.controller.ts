@@ -51,7 +51,7 @@ export class AuthController {
   @Get('login')
   @UseGuards(LocalAuthGuard)
   @ApiQuery({ type: LoginUserDto })
-  @ApiCreatedResponse({ type: UserDto })
+  @ApiOkResponse({ type: UserDto })
   @Redirect('/auth')
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   login() {}

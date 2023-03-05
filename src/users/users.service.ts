@@ -7,7 +7,8 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, TokenType } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { hashSync } from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -23,8 +24,20 @@ export class UsersService {
   findOrCreate(data: Prisma.UserCreateInput) {
     return this.prisma.user.upsert({
       where: { email: data.email },
-      update: {},
+      update: { loggedInAt: new Date() },
       create: data,
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        isVerified: true,
+        roles: true,
+        provider: true,
+        createdAt: true,
+        updatedAt: true,
+        loggedInAt: true,
+      },
     });
   }
 
@@ -39,6 +52,9 @@ export class UsersService {
         isVerified: true,
         roles: true,
         provider: true,
+        createdAt: true,
+        updatedAt: true,
+        loggedInAt: true,
       },
     });
   }
@@ -55,11 +71,16 @@ export class UsersService {
         isVerified: true,
         roles: true,
         provider: true,
+        createdAt: true,
+        updatedAt: true,
+        loggedInAt: true,
       },
     });
   }
 
   update(where: Prisma.UserWhereUniqueInput, data: Prisma.UserUpdateInput) {
+    if (data.password) data.password = hashSync(data.password as string, 10);
+
     return this.prisma.user.update({
       data,
       where,

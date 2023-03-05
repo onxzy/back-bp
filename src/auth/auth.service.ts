@@ -51,12 +51,13 @@ export class AuthService {
     try {
       const user = await this.usersService.findOrCreate({
         email: profile.emails[0].value,
-        firstName: profile.name?.givenName,
-        lastName: profile.name?.familyName,
+        firstName: profile.name.givenName,
+        lastName: profile.name.familyName,
         provider: profile.provider as Provider,
         isVerified: true,
       });
-      this.mailsService.sendMail(user.email, welcomeTemplate(user.firstName));
+      if (user.createdAt.getTime() == user.loggedInAt.getTime())
+        this.mailsService.sendMail(user.email, welcomeTemplate(user.firstName));
       return user;
     } catch (error) {
       if (error.code == 'P2002') throw new ConflictException();
