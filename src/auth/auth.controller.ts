@@ -3,12 +3,15 @@ import {
   Controller,
   Delete,
   Get,
+  HttpStatus,
   Param,
   Patch,
   Post,
   Redirect,
   Req,
+  Res,
   Session,
+  UseFilters,
   UseGuards,
 } from '@nestjs/common';
 import { RegisterUserDto } from './dto/register-user.input';
@@ -22,16 +25,23 @@ import {
 } from '@nestjs/swagger';
 import { LoginUserDto } from './dto/login-user.input';
 import { AuthenticatedGuard } from './guards/authenticated.guard';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { Session as ExpressSession } from 'express-session';
 import { UserDto } from 'src/users/dto/user';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { RecoverPasswordDto } from './dto/recover-password.input';
+import { ConfigService } from '@nestjs/config';
+import { Provider } from '@prisma/client';
+import { RedirectInternalServerError } from './filters/redirect-500.filter';
+import { RedirectUnauthorizedExternal } from './filters/redirect-401-external.filter';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post('register')
   register(@Body() data: RegisterUserDto) {
@@ -48,10 +58,21 @@ export class AuthController {
 
   @Get('google')
   @UseGuards(GoogleAuthGuard)
+  @UseFilters(RedirectUnauthorizedExternal, RedirectInternalServerError)
   @ApiOkResponse({ type: UserDto })
-  @Redirect('/auth') // TODO: Replace with client redirection
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  googleAuth() {}
+  googleAuth(@Req() req: Request, @Res() res: Response) {
+    res.redirect(
+      `${this.configService.get(
+        'client.auth.externalProviderRedirect.path',
+      )}?${this.configService.get(
+        'client.auth.externalProviderRedirect.parameters.provider',
+      )}=${Provider.google}&${this.configService.get(
+        'client.auth.externalProviderRedirect.parameters.status',
+      )}=${HttpStatus.OK}&${this.configService.get(
+        'client.auth.externalProviderRedirect.parameters.userId',
+      )}=${req.user.id}`,
+    );
+  }
 
   @Get()
   @UseGuards(AuthenticatedGuard)
@@ -81,10 +102,9 @@ export class AuthController {
     return this.authService.initVerification(req.user);
   }
 
-  @Get('/verify/:token')
-  async verifyUser(@Param('token') id: string) {
-    await this.authService.verification(id);
-    return 'Verified !'; // TODO: Replace with client redirection
+  @Patch('/verify/:token')
+  verifyUser(@Param('token') id: string) {
+    return this.authService.verification(id);
   }
 
   @Post('/recover/:email')

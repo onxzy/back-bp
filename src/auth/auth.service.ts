@@ -79,7 +79,11 @@ export class AuthService {
       user.email,
       accountVerificationTemplate(
         user.firstName,
-        `${this.configService.get('apiUrl')}/auth/verify/${token.id}`,
+        `${this.configService.get(
+          'client.auth.verify.path',
+        )}?${this.configService.get('client.auth.verify.parameter')}=${
+          token.id
+        }`,
       ),
     );
   }

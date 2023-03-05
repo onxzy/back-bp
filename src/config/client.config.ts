@@ -5,9 +5,24 @@ export const clientConfig = registerAs('client', () => {
   return {
     clientUrl,
     auth: {
+      verify: {
+        path: `${clientUrl}/auth/verify`,
+        parameter: 'token',
+      },
       recoverPassword: {
         path: `${clientUrl}/auth/recover`,
         parameter: 'token',
+      },
+      externalProviderRedirect: {
+        path: `${clientUrl}/auth/external`,
+        parameters: {
+          provider: 'provider',
+          status: 'status',
+          userId: 'user',
+        },
+      },
+      serverError: {
+        path: `${clientUrl}/auth/error`,
       },
     },
   };
