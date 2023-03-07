@@ -4,7 +4,7 @@ import { AuthService } from './auth.service';
 import { UsersModule } from '../users/users.module';
 import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from './strategies/local.strategy';
-import { GoogleStrategy } from './strategies/google.strategy';
+import { GoogleStrategy } from './strategies/external-providers/google.strategy';
 import { MailsModule } from '../mails/mails.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
