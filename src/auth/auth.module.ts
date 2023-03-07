@@ -1,20 +1,30 @@
 import { Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { UsersModule } from 'src/users/users.module';
+import { UsersModule } from '../users/users.module';
 import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from './strategies/local.strategy';
-import { UserSerializer } from './strategies/user.serializer';
 import { GoogleStrategy } from './strategies/google.strategy';
-import { MailsModule } from 'src/mails/mails.module';
+import { MailsModule } from '../mails/mails.module';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
   imports: [
     UsersModule,
     PassportModule.register({ session: true }),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get('auth.jwt.secret'),
+        signOptions: { expiresIn: configService.get('auth.jwt.maxAge') },
+      }),
+      inject: [ConfigService],
+    }),
     MailsModule,
   ],
-  providers: [AuthService, UserSerializer, LocalStrategy, GoogleStrategy],
+  providers: [AuthService, LocalStrategy, GoogleStrategy, JwtStrategy],
   controllers: [AuthController],
 })
 export class AuthModule {}

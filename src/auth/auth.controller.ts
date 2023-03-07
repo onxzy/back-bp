@@ -7,7 +7,7 @@ import {
   Param,
   Patch,
   Post,
-  Redirect,
+  Query,
   Req,
   Res,
   Session,
@@ -47,9 +47,9 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @ApiQuery({ type: LoginUserDto })
   @ApiOkResponse({ type: UserDto })
-  @Redirect('/auth')
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  login() {}
+  login(@Res() res: Response, @Query('stay') stay = false) {
+    res.redirect(`/auth?stay=${stay}`);
+  }
 
   @Get('google')
   @UseGuards(GoogleAuthGuard)
@@ -72,7 +72,15 @@ export class AuthController {
   @Get()
   @UseGuards(AuthenticatedGuard)
   @ApiOkResponse({ type: UserDto })
-  getUser(@Req() req: Request): UserDto {
+  getUser(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+    @Query('stay') stay?: boolean,
+  ): UserDto {
+    if (stay) {
+      const jwtCookie = this.authService.getJwtCookie(req.user.id);
+      res.cookie(jwtCookie.name, jwtCookie.payload, jwtCookie.options);
+    }
     return {
       id: req.user.id,
       email: req.user.email,
@@ -85,9 +93,15 @@ export class AuthController {
   }
 
   @Delete()
-  logout(@Session() session: ExpressSession) {
-    session.destroy((err) => {
-      throw err;
+  logout(
+    @Session() session: ExpressSession,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    session.destroy(null);
+    const jwtCookie = this.authService.getJwtCookie();
+    res.cookie(jwtCookie.name, '', {
+      ...jwtCookie.options,
+      maxAge: 0,
     });
   }
 

@@ -14,6 +14,9 @@ import { welcomeTemplate } from 'src/mails/templates/auth/welcome';
 import { accountVerificationTemplate } from 'src/mails/templates/auth/accountVerification';
 import { ConfigService } from '@nestjs/config';
 import { passwordResetTemplate } from 'src/mails/templates/auth/passwordReset';
+import { AuthJwt } from './dto/auth.jwt';
+import { JwtService } from '@nestjs/jwt';
+import { CookieOptions } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +24,7 @@ export class AuthService {
     private usersService: UsersService,
     private mailsService: MailsService,
     private configService: ConfigService,
+    private jwtService: JwtService,
   ) {}
 
   async register(data: RegisterUserDto) {
@@ -43,6 +47,7 @@ export class AuthService {
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.usersService.findUnique({ email }, true);
     if (!user) return null;
+    if (user.provider != Provider.email) return null;
     if (!compareSync(password, user.password)) return null;
     return user;
   }
@@ -124,5 +129,16 @@ export class AuthService {
   leave(id: string, user: User) {
     if (id == user.id) return this.usersService.delete(id);
     else return false;
+  }
+
+  getJwtCookie(id?: string) {
+    return {
+      name: this.configService.get('auth.jwt.cookieName'),
+      options: {
+        maxAge: this.configService.get('auth.jwt.maxAge') * 1000,
+        path: this.configService.get('auth.jwt.path'),
+      } as CookieOptions,
+      payload: id ? this.jwtService.sign({ userId: id } as AuthJwt) : undefined,
+    };
   }
 }
