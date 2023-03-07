@@ -16,7 +16,7 @@ import { Role } from '@prisma/client';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/create-user.input';
 import { AuthenticatedGuard } from '../auth/guards/authenticated.guard';
-import { Roles } from '../auth/strategies/role.decorator';
+import { Roles } from '../auth/guards/role.decorator';
 import { RolesGuard } from '../auth/guards/role.guard';
 import { FindUsersDto } from './dto/find-users.input';
 import { UserDto } from './dto/user';

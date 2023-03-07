@@ -23,7 +23,7 @@ import { AuthenticatedGuard } from './guards/authenticated.guard';
 import { Request, Response } from 'express';
 import { Session as ExpressSession } from 'express-session';
 import { UserDto } from 'src/users/dto/user';
-import { GoogleAuthGuard } from './guards/google-auth.guard';
+import { GoogleAuthGuard } from './guards/external-providers/google-auth.guard';
 import { RecoverPasswordDto } from './dto/recover-password.input';
 import { ConfigService } from '@nestjs/config';
 import { Provider } from '@prisma/client';
