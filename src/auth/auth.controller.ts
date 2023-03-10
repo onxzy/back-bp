@@ -56,6 +56,8 @@ export class AuthController {
   @UseFilters(RedirectUnauthorizedExternal, RedirectInternalServerError)
   @ApiOkResponse({ type: UserDto })
   googleAuth(@Req() req: Request, @Res() res: Response) {
+    const jwtCookie = this.authService.getJwtCookie(req.user.id);
+    res.cookie(jwtCookie.name, jwtCookie.payload, jwtCookie.options);
     res.redirect(
       `${this.configService.get(
         'client.auth.externalProviderRedirect.path',
