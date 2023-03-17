@@ -19,7 +19,7 @@ export class MailsService {
       })
     } else {
       this.mailTransporter = null;
-      console.warn('[Mails Service] No SMTP server configured !');
+      console.info('[Mails Service] No SMTP server configured !');
     }
     
   }

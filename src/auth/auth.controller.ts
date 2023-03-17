@@ -22,7 +22,7 @@ import { LoginUserDto } from './dto/login-user.input';
 import { AuthenticatedGuard } from './guards/authenticated.guard';
 import { Request, Response } from 'express';
 import { Session as ExpressSession } from 'express-session';
-import { UserDto } from 'src/users/dto/user';
+import { UserDto } from '../users/dto/user';
 import { GoogleAuthGuard } from './guards/external-providers/google-auth.guard';
 import { RecoverPasswordDto } from './dto/recover-password.input';
 import { ConfigService } from '@nestjs/config';
@@ -52,8 +52,8 @@ export class AuthController {
   }
 
   @Get('google')
-  @UseGuards(GoogleAuthGuard)
   @UseFilters(RedirectUnauthorizedExternal, RedirectInternalServerError)
+  @UseGuards(GoogleAuthGuard)
   @ApiOkResponse({ type: UserDto })
   googleAuth(@Req() req: Request, @Res() res: Response) {
     const jwtCookie = this.authService.getJwtCookie(req.user.id);

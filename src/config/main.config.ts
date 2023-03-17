@@ -1,3 +1,5 @@
+import * as session from "express-session";
+
 export const mainConfig = () => {
   const port = parseInt(process.env.PORT, 10) || 3000;
   return {
@@ -9,6 +11,6 @@ export const mainConfig = () => {
       secret: process.env.SESSION_SECRET || 'session-secret',
       resave: false,
       saveUninitialized: false,
-    },
+    } as session.SessionOptions,
   };
 };

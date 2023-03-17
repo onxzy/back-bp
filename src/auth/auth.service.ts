@@ -5,15 +5,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Provider, TokenType, User } from '@prisma/client';
-import { UsersService } from 'src/users/users.service';
+import { UsersService } from '../users/users.service';
 import { RegisterUserDto } from './dto/register-user.input';
 import { compareSync, hashSync } from 'bcrypt';
 import { Profile } from 'passport';
-import { MailsService } from 'src/mails/mails.service';
-import { welcomeTemplate } from 'src/mails/templates/auth/welcome';
-import { accountVerificationTemplate } from 'src/mails/templates/auth/accountVerification';
+import { MailsService } from '../mails/mails.service';
+import { welcomeTemplate } from '../mails/templates/auth/welcome';
+import { accountVerificationTemplate } from '../mails/templates/auth/accountVerification';
 import { ConfigService } from '@nestjs/config';
-import { passwordResetTemplate } from 'src/mails/templates/auth/passwordReset';
+import { passwordResetTemplate } from '../mails/templates/auth/passwordReset';
 import { AuthJwt } from './dto/auth.jwt';
 import { JwtService } from '@nestjs/jwt';
 import { CookieOptions } from 'express';
