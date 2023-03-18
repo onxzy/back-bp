@@ -46,7 +46,7 @@ enum TokenType {
 
 model User_Tokens {
   id          String    @id @unique @default(uuid())
-  user        User      @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      String    // FIXME: Unique constraint on userId & type
   type        TokenType
   expiration  DateTime
