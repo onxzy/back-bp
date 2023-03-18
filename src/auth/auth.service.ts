@@ -31,9 +31,9 @@ export class AuthService {
     const passwordHash = hashSync(data.password, 10);
     try {
       const user = await this.usersService.create({
-        email: data.email,
-        firstName: data.firstName,
-        lastName: data.lastName,
+        email: data.email.trim(),
+        firstName: data.firstName.trim(),
+        lastName: data.lastName.trim(),
         password: passwordHash,
       });
       await this.initVerification(user);
