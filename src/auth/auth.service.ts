@@ -79,6 +79,7 @@ export class AuthService {
     const { token } = await this.usersService.createUserToken(
       user.id,
       TokenType.verification,
+      this.configService.get('auth.userToken.verifyExpiration'),
     );
 
     try {
@@ -111,6 +112,7 @@ export class AuthService {
     const { token } = await this.usersService.createUserToken(
       user.id,
       TokenType.passwordReset,
+      this.configService.get('auth.userToken.recoverExpiration'),
     );
 
     await this.mailsService.sendMail(

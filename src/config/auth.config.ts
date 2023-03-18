@@ -7,7 +7,13 @@ export const authConfig = registerAs('auth', () => ({
     maxAge: 30 * 24 * 60 * 60, // In seconds
     path: '/',
   },
-  verificationTokenExpiration: 24 * 60 * 60, // In seconds
+  userToken: {
+    // Expiration in seconds
+    defaultExpiration: 24 * 60 * 60,
+    verifyExpiration: 24 * 60 * 60,
+    recoverExpiration: 10 * 60,
+    removeExpiredCron: '0 * * * *',
+  },
   google: {
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,

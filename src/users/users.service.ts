@@ -9,13 +9,24 @@ import { ConfigService } from '@nestjs/config';
 import { Prisma, TokenType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { hashSync } from 'bcrypt';
+import { CronJob } from 'cron';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
-    private configService: ConfigService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    new CronJob(configService.get('auth.userToken.removeExpiredCron'), () => {
+      this.prisma.user_Tokens.deleteMany({
+        where: {
+          expiration: {
+            gte: new Date(),
+          },
+        },
+      });
+    }).start();
+  }
 
   create(data: Prisma.UserCreateInput) {
     return this.prisma.user.create({ data });
@@ -92,12 +103,15 @@ export class UsersService {
     return this.prisma.user.delete({ where: { id } });
   }
 
-  async createUserToken(userId: string, type: TokenType) {
+  async createUserToken(
+    userId: string,
+    type: TokenType,
+    expirationTime: number = this.configService.get(
+      'auth.userToken.defaultExpiration',
+    ),
+  ) {
     const expiration = new Date();
-    expiration.setSeconds(
-      expiration.getSeconds() +
-        this.configService.get('auth.verificationTokenExpiration'),
-    );
+    expiration.setSeconds(expiration.getSeconds() + expirationTime);
 
     try {
       const token = await this.prisma.user_Tokens.create({
