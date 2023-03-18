@@ -81,17 +81,21 @@ export class AuthService {
       TokenType.verification,
     );
 
-    await this.mailsService.sendMail(
-      user.email,
-      accountVerificationTemplate(
-        user.firstName,
-        `${this.configService.get(
-          'client.auth.verify.path',
-        )}?${this.configService.get('client.auth.verify.parameter')}=${
-          token.id
-        }`,
-      ),
-    );
+    try {
+      await this.mailsService.sendMail(
+        user.email,
+        accountVerificationTemplate(
+          user.firstName,
+          `${this.configService.get(
+            'client.auth.verify.path',
+          )}?${this.configService.get('client.auth.verify.parameter')}=${
+            token.id
+          }`,
+        ),
+      );
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   verification(id: string) {
