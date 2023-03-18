@@ -131,9 +131,21 @@ export class AuthController {
     return this.authService.recoverPassword(id, data.email, data.password);
   }
 
-  @Delete('/leave')
+  @Delete('/leave/:id')
   @UseGuards(AuthenticatedGuard)
-  leave(@Param('id') id: string, @Req() req: Request) {
-    return this.authService.leave(id, req.user);
+  async leave(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Session() session: ExpressSession,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    await this.authService.leave(id, req.user);
+
+    session.destroy(null);
+    const jwtCookie = this.authService.getJwtCookie();
+    res.cookie(jwtCookie.name, '', {
+      ...jwtCookie.options,
+      maxAge: 0,
+    });
   }
 }

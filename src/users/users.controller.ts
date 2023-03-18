@@ -56,7 +56,7 @@ export class UsersController {
     });
   }
 
-  @Get('id/:id')
+  @Get(':id')
   @Roles(Role.ADMIN)
   @UseGuards(AuthenticatedGuard, RolesGuard)
   async findOneById(@Param('id') id: string) {

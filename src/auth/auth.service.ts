@@ -123,7 +123,7 @@ export class AuthService {
   }
 
   recoverPassword(id: string, email: string, password: string) {
-    return this.usersService.recoverPassword(id, email, password);
+    return this.usersService.recoverPassword(id, email, hashSync(password, 10));
   }
 
   leave(id: string, user: User) {
