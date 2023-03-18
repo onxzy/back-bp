@@ -5,20 +5,19 @@ import { mailsConfig } from '../config/mails.config';
 import { authConfig } from '../config/auth.config';
 import { clientConfig } from '../config/client.config';
 import { initBootstrap } from '../initBoostrap';
-import * as SupertestSession from 'supertest-session';
-import { SuperTest, Test as SuperTest_Test } from 'supertest';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaClient, Provider, Role } from '@prisma/client';
 import { hashSync } from 'bcrypt';
 import { UsersModule } from './users.module';
 import { AuthModule } from '../auth/auth.module';
+import * as supertest from 'supertest';
 
 const prisma = new PrismaClient();
 
 describe('UsersController', () => {
   let app: INestApplication;
-  let adminSession: SuperTest<SuperTest_Test>;
-  let userSession: SuperTest<SuperTest_Test>;
+  let adminSession: supertest.SuperTest<supertest.Test>;
+  let userSession: supertest.SuperTest<supertest.Test>;
 
   const adminUser = {
     email: 'test-users_controller-admin-example@example.org',
@@ -87,14 +86,14 @@ describe('UsersController', () => {
       })
     ).id;
 
-    adminSession = SupertestSession(app.getHttpServer());
+    adminSession = supertest.agent(app.getHttpServer());
     await adminSession
       .get(
         `/auth/login?email=${adminUser.email}&password=test-users_controller-admin-password`,
       )
       .expect(302);
 
-    userSession = SupertestSession(app.getHttpServer());
+    userSession = supertest.agent(app.getHttpServer());
     await userSession
       .get(
         `/auth/login?email=${defaultUser.email}&password=test-users_controller-default-password`,
