@@ -81,7 +81,7 @@ export class StorageService {
         );
       }
 
-      const policy = this.buildPolicy(bucket);
+      const policy = this.buildPolicy(bucket as BucketConfig);
       if (policy) {
         await this.s3.send(
           new PutBucketPolicyCommand({
@@ -97,8 +97,6 @@ export class StorageService {
         );
       }
     }
-
-    this.test();
   }
 
   getObjectUrl(bucket: BucketName, key: string) {

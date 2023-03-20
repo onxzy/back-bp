@@ -1,9 +1,8 @@
 import { registerAs } from '@nestjs/config';
-import { BucketName } from './storage.config';
 
 export const authConfig_shared = {
   avatar: {
-    bucket: BucketName.avatar,
+    bucket: 'avatar',
     public: true,
   },
 } as const;
