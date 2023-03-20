@@ -1,4 +1,4 @@
-import * as session from "express-session";
+import * as session from 'express-session';
 
 export const mainConfig = () => {
   const port = parseInt(process.env.PORT, 10) || 3000;
@@ -12,5 +12,7 @@ export const mainConfig = () => {
       resave: false,
       saveUninitialized: false,
     } as session.SessionOptions,
-  };
+  } as const;
 };
+
+export type mainConfig = ReturnType<typeof mainConfig>;

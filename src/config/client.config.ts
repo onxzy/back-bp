@@ -25,5 +25,7 @@ export const clientConfig = registerAs('client', () => {
         path: `${clientUrl}/auth/error`,
       },
     },
-  };
+  } as const;
 });
+
+export type clientConfig = ReturnType<typeof clientConfig>;

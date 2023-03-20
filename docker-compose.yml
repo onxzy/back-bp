@@ -43,6 +43,17 @@ services:
       - POSTGRES_DB=${DATABASE_NAME}
     ports:
       - "${DATABASE_PORT}:5432"
+  minio:
+    image: bitnami/minio
+    volumes:
+      - minio:/data
+    environment:
+      - MINIO_ROOT_USER
+      - MINIO_ROOT_PASSWORD
+    ports:
+      - ${MINIO_CONSOLE_PORT}:9001
+      - ${MINIO_PORT}:9000
 
 volumes:
   db:
+  minio:

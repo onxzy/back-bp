@@ -21,6 +21,9 @@
     "test:e2e": "node test/init-e2e.js && jest --config ./test/jest-e2e.json -i"
   },
   "dependencies": {
+    "@aws-sdk/client-iam": "^3.294.0",
+    "@aws-sdk/client-s3": "^3.294.0",
+    "@aws-sdk/s3-request-presigner": "^3.294.0",
     "@nestjs/common": "^9.0.0",
     "@nestjs/config": "^2.3.1",
     "@nestjs/core": "^9.0.0",
