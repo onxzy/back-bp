@@ -128,11 +128,14 @@ describe('AuthController', () => {
         }),
       );
       expect(body).not.toHaveProperty('password');
+
+      return;
     });
 
     it('Logout', async () => {
       await emailSession.delete('/auth/').expect(200);
       await emailSession.get('/auth/').expect(401);
+      return;
     });
 
     it('Verify email', async () => {
@@ -147,6 +150,8 @@ describe('AuthController', () => {
           })
         ).isVerified,
       ).toBe(true);
+
+      return;
     });
 
     describe('recover', () => {
@@ -165,6 +170,8 @@ describe('AuthController', () => {
             type: TokenType.passwordReset,
           }),
         );
+
+        return;
       });
 
       it('change password', async () => {
@@ -175,6 +182,8 @@ describe('AuthController', () => {
             password: emailUser.password + '_new',
           })
           .expect(200);
+
+        return;
       });
 
       it('login', async () => {
@@ -188,6 +197,8 @@ describe('AuthController', () => {
             `/auth/login?email=${emailUser.email}&password=${emailUser.password}_new`,
           )
           .expect(302);
+
+        return;
       });
     });
 
@@ -218,10 +229,13 @@ describe('AuthController', () => {
             cookieAccessInfo,
           ),
         );
+
+        return;
       });
 
       it('login', async () => {
         await stayConnectedSession.get('/auth').expect(200);
+        return;
       });
     });
 
@@ -239,6 +253,8 @@ describe('AuthController', () => {
           `/auth/login?email=${emailUser.email}&password=${emailUser.password}`,
         )
         .expect(401);
+
+      return;
     });
   });
 

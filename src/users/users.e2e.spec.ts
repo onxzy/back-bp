@@ -172,6 +172,8 @@ describe('UsersController', () => {
         firstName: `${createUser.firstName}-updated`,
       })
       .expect(200);
+
+    return;
   });
 
   it('findOneById patched', async () => {
@@ -189,6 +191,7 @@ describe('UsersController', () => {
   it('delete', async () => {
     await adminSession.delete(`/users/${createUser.id}`).expect(200);
     await adminSession.get(`/users/${createUser.id}`).expect(404);
+    return;
   });
 
   afterAll(async () => {
