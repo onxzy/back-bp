@@ -6,16 +6,19 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Prisma, TokenType } from '@prisma/client';
+import { Prisma, TokenType, User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { hashSync } from 'bcrypt';
 import { CronJob } from 'cron';
+import { StorageService } from '../storage/storage.service';
+import { authConfig } from '../config/auth.config';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
+    private readonly storageService: StorageService,
   ) {
     new CronJob(configService.get('auth.userToken.removeExpiredCron'), () => {
       this.prisma.user_Tokens.deleteMany({
@@ -163,5 +166,33 @@ export class UsersService {
       where: { id: token.userId },
       data: { password },
     });
+  }
+
+  avatar(userId: string) {
+    return {
+      get: () =>
+        this.storageService.getObjectUrl(
+          this.configService.get<authConfig['avatar']['bucket']>(
+            'auth.avatar.bucket',
+          ),
+          userId,
+        ),
+      put: async () =>
+        this.storageService
+          .presign(
+            this.configService.get<authConfig['avatar']['bucket']>(
+              'auth.avatar.bucket',
+            ),
+            userId,
+          )
+          .put(3600),
+      delete: () =>
+        this.storageService.delete(
+          this.configService.get<authConfig['avatar']['bucket']>(
+            'auth.avatar.bucket',
+          ),
+          userId,
+        ),
+    };
   }
 }

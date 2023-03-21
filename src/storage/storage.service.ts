@@ -16,7 +16,11 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { BucketConfig, BucketName, storageConfig } from '../config/storage.config';
+import {
+  BucketConfig,
+  BucketName,
+  storageConfig,
+} from '../config/storage.config';
 
 @Injectable()
 export class StorageService {
@@ -69,7 +73,7 @@ export class StorageService {
       await this.s3.send(new ListBucketsCommand({}))
     ).Buckets.map((bucket) => bucket.Name);
 
-    for (const bucket of this.configService.get<storageConfig['buckets']>(
+    for (const bucket of this.configService.get<BucketConfig[]>(
       'storage.buckets',
     )) {
       if (!existingBuckets.includes(bucket.name)) {
@@ -81,7 +85,7 @@ export class StorageService {
         );
       }
 
-      const policy = this.buildPolicy(bucket as BucketConfig);
+      const policy = this.buildPolicy(bucket);
       if (policy) {
         await this.s3.send(
           new PutBucketPolicyCommand({
