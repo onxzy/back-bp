@@ -11,6 +11,7 @@ import { hashSync } from 'bcrypt';
 import { UsersModule } from './users.module';
 import { AuthModule } from '../auth/auth.module';
 import * as supertest from 'supertest';
+import { storageConfig } from '../config/storage.config';
 
 const prisma = new PrismaClient();
 
@@ -57,7 +58,13 @@ describe('UsersController', () => {
       imports: [
         ConfigModule.forRoot({
           isGlobal: true,
-          load: [mainConfig, authConfig, mailsConfig, clientConfig],
+          load: [
+            mainConfig,
+            authConfig,
+            mailsConfig,
+            clientConfig,
+            storageConfig,
+          ],
         }),
         UsersModule,
         AuthModule,
@@ -197,5 +204,6 @@ describe('UsersController', () => {
   afterAll(async () => {
     await app.close();
     await prisma.user.deleteMany({});
+    return;
   });
 });

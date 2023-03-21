@@ -24,6 +24,7 @@ import {
 } from '@prisma/client';
 import { CookieAccessInfo } from 'cookiejar';
 import * as supertest from 'supertest';
+import { storageConfig } from '../config/storage.config';
 
 const prisma = new PrismaClient();
 const cookieAccessInfo = new CookieAccessInfo('127.0.0.1');
@@ -38,7 +39,13 @@ describe('AuthController', () => {
       imports: [
         ConfigModule.forRoot({
           isGlobal: true,
-          load: [mainConfig, authConfig, mailsConfig, clientConfig],
+          load: [
+            mainConfig,
+            authConfig,
+            mailsConfig,
+            clientConfig,
+            storageConfig,
+          ],
         }),
         UsersModule,
         PassportModule.register({ session: true }),
@@ -263,5 +270,6 @@ describe('AuthController', () => {
   afterAll(async () => {
     await app.close();
     await prisma.user.deleteMany({});
+    return;
   });
 });
