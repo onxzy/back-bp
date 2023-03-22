@@ -25,15 +25,12 @@ import { FindUsersDto } from './dto/find-users.input';
 import { UserDto } from './dto/user';
 import { UpdateUserDto } from './dto/update-user.input';
 import { Request, Response } from 'express';
+import { RolesOrSelfGuard } from '../auth/guards/role-or-self.guard';
 
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-
-  // ======================================================
-  // ANO
-  // ======================================================
 
   @Get(':id/avatar')
   getAvatar(
@@ -43,35 +40,10 @@ export class UsersController {
     res.redirect(this.usersService.avatar(id).get());
   }
 
-  // ======================================================
-  // USER
-  // ======================================================
-
-  @Put('avatar')
-  @UseGuards(AuthenticatedGuard)
-  async putAvatar(
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    const signedUrl = await this.usersService.avatar(req.user.id).put();
-    res.redirect(signedUrl);
-    console.log(signedUrl);
-  }
-
-  @Delete('avatar')
-  @UseGuards(AuthenticatedGuard)
-  deleteAvatar(@Req() req: Request) {
-    return this.usersService.avatar(req.user.id).delete();
-  }
-
-  // ======================================================
-  // ADMIN
-  // ======================================================
-
   @Post()
   @Roles(Role.ADMIN)
   @UseGuards(AuthenticatedGuard, RolesGuard)
-  admin_create(@Body() data: CreateUserDto) {
+  create(@Body() data: CreateUserDto) {
     try {
       return this.usersService.create(data);
     } catch (error) {
@@ -84,7 +56,7 @@ export class UsersController {
   @Roles(Role.ADMIN)
   @UseGuards(AuthenticatedGuard, RolesGuard)
   @ApiOkResponse({ type: UserDto, isArray: true })
-  admin_findAll(@Query() query: FindUsersDto) {
+  findAll(@Query() query: FindUsersDto) {
     return this.usersService.findMany({
       email: query.email ? { contains: query.email } : undefined,
       firstName: query.firstName
@@ -100,7 +72,7 @@ export class UsersController {
   @Get(':id')
   @Roles(Role.ADMIN)
   @UseGuards(AuthenticatedGuard, RolesGuard)
-  async admin_findOneById(@Param('id') id: string) {
+  async findOneById(@Param('id') id: string) {
     const user = await this.usersService.findUnique({ id });
     if (!user) throw new NotFoundException();
     return user;
@@ -109,7 +81,7 @@ export class UsersController {
   @Get('email/:email')
   @Roles(Role.ADMIN)
   @UseGuards(AuthenticatedGuard, RolesGuard)
-  async admin_findOneByEmail(@Param('email') email: string) {
+  async findOneByEmail(@Param('email') email: string) {
     const user = await this.usersService.findUnique({ email });
     if (!user) throw new NotFoundException();
     return user;
@@ -118,7 +90,7 @@ export class UsersController {
   @Patch(':id')
   @Roles(Role.ADMIN)
   @UseGuards(AuthenticatedGuard, RolesGuard)
-  async admin_update(@Param('id') id: string, @Body() data: UpdateUserDto) {
+  async update(@Param('id') id: string, @Body() data: UpdateUserDto) {
     try {
       return await this.usersService.update({ id }, data);
     } catch (error) {
@@ -130,7 +102,7 @@ export class UsersController {
   @Delete(':id')
   @Roles(Role.ADMIN)
   @UseGuards(AuthenticatedGuard, RolesGuard)
-  async admin_remove(@Param('id') id: string) {
+  async remove(@Param('id') id: string) {
     try {
       return await this.usersService.delete(id);
     } catch (error) {
@@ -141,8 +113,8 @@ export class UsersController {
 
   @Put(':id/avatar')
   @Roles(Role.ADMIN)
-  @UseGuards(AuthenticatedGuard, RolesGuard)
-  async admin_putAvatar(
+  @UseGuards(AuthenticatedGuard, RolesOrSelfGuard)
+  async putAvatar(
     @Param('id') id: string,
     @Res({ passthrough: true }) res: Response,
   ) {
@@ -151,8 +123,8 @@ export class UsersController {
 
   @Delete(':id/avatar')
   @Roles(Role.ADMIN)
-  @UseGuards(AuthenticatedGuard, RolesGuard)
-  admin_deleteAvatar(@Param('id') id: string) {
+  @UseGuards(AuthenticatedGuard, RolesOrSelfGuard)
+  deleteAvatar(@Param('id') id: string) {
     return this.usersService.avatar(id).delete();
   }
 }
