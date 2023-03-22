@@ -1,24 +1,26 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { mainConfig } from '../config/main.config';
-import { mailsConfig } from '../config/mails.config';
-import { authConfig } from '../config/auth.config';
-import { clientConfig } from '../config/client.config';
 import { initBootstrap } from '../initBoostrap';
-import { ConfigModule } from '@nestjs/config';
 import { PrismaClient, Provider, Role } from '@prisma/client';
 import { hashSync } from 'bcrypt';
-import { UsersModule } from './users.module';
-import { AuthModule } from '../auth/auth.module';
 import * as supertest from 'supertest';
-import { storageConfig } from '../config/storage.config';
+import { AppModule } from '../app.module';
+import { readFileSync, statSync } from 'fs';
+import * as mime from 'mime';
+import { StorageService } from '../storage/storage.service';
+import { DeleteObjectCommand, ListObjectsCommand } from '@aws-sdk/client-s3';
+import { ConfigService } from '@nestjs/config';
+import { authConfig } from '../config/auth.config';
 
 const prisma = new PrismaClient();
 
 describe('UsersController', () => {
   let app: INestApplication;
+  let storageService: StorageService;
+  let configService: ConfigService;
   let adminSession: supertest.SuperTest<supertest.Test>;
   let userSession: supertest.SuperTest<supertest.Test>;
+  let anonSession: supertest.SuperTest<supertest.Test>;
 
   const adminUser = {
     email: 'test-users_controller-admin-example@example.org',
@@ -53,28 +55,22 @@ describe('UsersController', () => {
   };
   const createUser_password = 'test-users_controller-create-password';
 
+  const avatarPath = `${__dirname}/../../test/files/avatar.jpg`;
+  const avatarFile = readFileSync(avatarPath);
+
   beforeAll(async () => {
+    // Init Module
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        ConfigModule.forRoot({
-          isGlobal: true,
-          load: [
-            mainConfig,
-            authConfig,
-            mailsConfig,
-            clientConfig,
-            storageConfig,
-          ],
-        }),
-        UsersModule,
-        AuthModule,
-      ],
+      imports: [AppModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();
     initBootstrap(app);
     await app.init();
+    configService = moduleFixture.get<ConfigService>(ConfigService);
+    storageService = moduleFixture.get<StorageService>(StorageService);
 
+    // Init Database
     adminUser.id = (
       await prisma.user.create({
         data: {
@@ -93,6 +89,9 @@ describe('UsersController', () => {
       })
     ).id;
 
+    // Init Sessions
+    anonSession = supertest.agent(app.getHttpServer());
+
     adminSession = supertest.agent(app.getHttpServer());
     await adminSession
       .get(
@@ -106,104 +105,167 @@ describe('UsersController', () => {
         `/auth/login?email=${defaultUser.email}&password=test-users_controller-default-password`,
       )
       .expect(302);
+
+    // Init Storage
+    await storageService.emptyBucket(configService.get<authConfig['avatar']['bucket']>(
+      'auth.avatar.bucket',
+    ))
   });
 
-  it('protected', () => {
-    return userSession.get('/users').expect(403);
-  });
-
-  describe('findAll', () => {
-    it('all', async () => {
-      const { body } = await adminSession.get('/users').expect(200);
-      return expect(body).toEqual([
-        expect.objectContaining(adminUser),
-        expect.objectContaining(defaultUser),
-      ]);
+  describe('admin CRUD', () => {
+  
+    describe('findAll', () => {
+      it('all', async () => {
+        const { body } = await adminSession.get('/users').expect(200);
+        return expect(body).toEqual([
+          expect.objectContaining(adminUser),
+          expect.objectContaining(defaultUser),
+        ]);
+      });
+  
+      it('admin', async () => {
+        const { body } = await adminSession
+          .get(`/users?roles=${Role.ADMIN}`)
+          .expect(200);
+        return expect(body).toEqual([expect.objectContaining(adminUser)]);
+      });
+  
+      it('email', async () => {
+        const { body } = await adminSession
+          .get(`/users?email=${defaultUser.email}`)
+          .expect(200);
+        return expect(body).toEqual([expect.objectContaining(defaultUser)]);
+      });
+  
+      it('firstName', async () => {
+        const { body } = await adminSession
+          .get(`/users?firstName=${defaultUser.firstName}`)
+          .expect(200);
+        return expect(body).toEqual([expect.objectContaining(defaultUser)]);
+      });
+  
+      it('lastName', async () => {
+        const { body } = await adminSession
+          .get(`/users?lastName=${defaultUser.lastName}`)
+          .expect(200);
+        return expect(body).toEqual([expect.objectContaining(defaultUser)]);
+      });
     });
-
-    it('admin', async () => {
+  
+    it('create', async () => {
       const { body } = await adminSession
-        .get(`/users?roles=${Role.ADMIN}`)
-        .expect(200);
-      return expect(body).toEqual([expect.objectContaining(adminUser)]);
+        .post(`/users`)
+        .send({
+          email: createUser.email,
+          firstName: createUser.firstName,
+          lastName: createUser.lastName,
+          roles: createUser.roles,
+          password: hashSync(createUser_password, 10),
+        })
+        .expect(201);
+      createUser.id = body.id;
+      return expect(body).toEqual(expect.objectContaining(createUser));
     });
-
-    it('email', async () => {
+  
+    it('findOneByEmail', async () => {
       const { body } = await adminSession
-        .get(`/users?email=${defaultUser.email}`)
+        .get(`/users/email/${createUser.email}`)
         .expect(200);
-      return expect(body).toEqual([expect.objectContaining(defaultUser)]);
+      return expect(body).toEqual(expect.objectContaining(createUser));
     });
-
-    it('firstName', async () => {
+  
+    it('patch', async () => {
+      await adminSession
+        .patch(`/users/${createUser.id}`)
+        .send({
+          firstName: `${createUser.firstName}-updated`,
+        })
+        .expect(200);
+  
+      return;
+    });
+  
+    it('findOneById patched', async () => {
       const { body } = await adminSession
-        .get(`/users?firstName=${defaultUser.firstName}`)
+        .get(`/users/${createUser.id}`)
         .expect(200);
-      return expect(body).toEqual([expect.objectContaining(defaultUser)]);
+      return expect(body).toEqual(
+        expect.objectContaining({
+          ...createUser,
+          firstName: `${createUser.firstName}-updated`,
+        }),
+      );
+    });
+  
+    it('delete', async () => {
+      await adminSession.delete(`/users/${createUser.id}`).expect(200);
+      await adminSession.get(`/users/${createUser.id}`).expect(404);
+      return;
+    });
+  })
+
+  describe('user CRUD', () => {
+    it('protected', () => {
+      return userSession.get('/users').expect(403);
     });
 
-    it('lastName', async () => {
-      const { body } = await adminSession
-        .get(`/users?lastName=${defaultUser.lastName}`)
-        .expect(200);
-      return expect(body).toEqual([expect.objectContaining(defaultUser)]);
-    });
-  });
-
-  it('create', async () => {
-    const { body } = await adminSession
-      .post(`/users`)
-      .send({
-        email: createUser.email,
-        firstName: createUser.firstName,
-        lastName: createUser.lastName,
-        roles: createUser.roles,
-        password: hashSync(createUser_password, 10),
+    describe('avatar', () => {
+      it('no avatar', async () => {
+        await userSession.get(`/users/${defaultUser.id}/avatar`).redirects(1).expect(404);
       })
-      .expect(201);
-    createUser.id = body.id;
-    return expect(body).toEqual(expect.objectContaining(createUser));
-  });
+      
+      it('put avatar', async () => {
+        const { headers } = await userSession.put(`/users/${defaultUser.id}/avatar`).expect(302)
+        expect(headers.location).toBeDefined();
 
-  it('findOneByEmail', async () => {
-    const { body } = await adminSession
-      .get(`/users/email/${createUser.email}`)
-      .expect(200);
-    return expect(body).toEqual(expect.objectContaining(createUser));
-  });
-
-  it('patch', async () => {
-    await adminSession
-      .patch(`/users/${createUser.id}`)
-      .send({
-        firstName: `${createUser.firstName}-updated`,
+        const { size: fileSize, } = statSync(avatarPath)
+        const { status } = await fetch(headers.location, {
+          method: 'PUT',
+          body: avatarFile,
+          headers: {
+            'Content-length': String(fileSize),
+            'Content-type': mime.getType(avatarPath)
+          },
+        })
+        expect(status).toBe(200);
       })
-      .expect(200);
+  
+      it('get avatar', async () => {
+        const { body } =
+          await userSession.get(`/users/${defaultUser.id}/avatar`)
+            .redirects(1)
+            .expect(200);
+        expect(body).toStrictEqual(avatarFile);
+      })
 
-    return;
-  });
+      it('get avatar (anon)', async () => {
+        const { body } =
+          await anonSession.get(`/users/${defaultUser.id}/avatar`)
+            .redirects(1)
+            .expect(200);
+        expect(body).toStrictEqual(avatarFile);
+      })
+  
+      it('delete avatar', async () => {
+        await userSession.delete(`/users/${defaultUser.id}/avatar`).expect(200);
+      })
+  })
 
-  it('findOneById patched', async () => {
-    const { body } = await adminSession
-      .get(`/users/${createUser.id}`)
-      .expect(200);
-    return expect(body).toEqual(
-      expect.objectContaining({
-        ...createUser,
-        firstName: `${createUser.firstName}-updated`,
-      }),
-    );
-  });
+  describe('anon CRUD', () => {
+    it('protected', () => {
+      return anonSession.get('/users').expect(401);
+    });
+  })
 
-  it('delete', async () => {
-    await adminSession.delete(`/users/${createUser.id}`).expect(200);
-    await adminSession.get(`/users/${createUser.id}`).expect(404);
-    return;
-  });
+  
+  })
 
   afterAll(async () => {
     await app.close();
     await prisma.user.deleteMany({});
+    await storageService.emptyBucket(configService.get<authConfig['avatar']['bucket']>(
+      'auth.avatar.bucket',
+    ))
     return;
   });
 });

@@ -8,6 +8,11 @@ process.env.SMTP_PASSWORD = process.env.TESTS_E2E_SMTP_PASSWORD;
 process.env.SMTP_PORT = process.env.TESTS_E2E_SMTP_PORT;
 process.env.SMTP_SECURE = process.env.TESTS_E2E_SMTP_SECURE;
 
+process.env.S3_ENDPOINT = process.env.TESTS_E2E_S3_ENDPOINT;
+process.env.S3_REGION = process.env.TESTS_E2E_S3_REGION;
+process.env.S3_ACCESS_KEY = process.env.TESTS_E2E_S3_ACCESS_KEY;
+process.env.S3_SECRET_KEY = process.env.TESTS_E2E_S3_SECRET_KEY;
+
 global.console = {
   ...console,
   info: jest.fn(),

@@ -7,6 +7,7 @@ import {
   GetBucketPolicyCommand,
   GetObjectCommand,
   ListBucketsCommand,
+  ListObjectsCommand,
   PutBucketAclCommand,
   PutBucketPolicyCommand,
   PutObjectCommand,
@@ -77,7 +78,7 @@ export class StorageService {
       'storage.buckets',
     )) {
       if (!existingBuckets.includes(bucket.name)) {
-        console.warn(`[Storage] Bucket ${bucket.name} not found, creating...`);
+        console.info(`[Storage] Bucket ${bucket.name} not found, creating...`);
         await this.s3.send(
           new CreateBucketCommand({
             Bucket: bucket.name,
@@ -167,6 +168,16 @@ export class StorageService {
         ),
       ) => signUrl(PutObjectCommand, expiresIn),
     };
+  }
+
+  async emptyBucket(bucket: BucketName) {
+    const { Contents } = await this.s3.send(new ListObjectsCommand({
+      Bucket: bucket
+    }))
+    if (!Contents) return;
+    for (const o of Contents) {
+      await this.delete(bucket, o.Key);
+    }
   }
 
   async test() {
