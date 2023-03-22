@@ -1,4 +1,5 @@
-import * as session from 'express-session';
+import { CorsOptions } from 'cors';
+import { SessionOptions } from 'express-session';
 
 export const mainConfig = () => {
   const port = parseInt(process.env.PORT, 10) || 3000;
@@ -11,7 +12,13 @@ export const mainConfig = () => {
       secret: process.env.SESSION_SECRET || 'session-secret',
       resave: false,
       saveUninitialized: false,
-    } as session.SessionOptions,
+    } as SessionOptions,
+    cors: {
+      origin: '*',
+      credentials: true,
+      exposedHeaders: ['Content-Type', 'Authorization'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+    } as CorsOptions
   } as const;
 };
 
