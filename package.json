@@ -30,10 +30,15 @@
     "@nestjs/jwt": "^10.0.2",
     "@nestjs/passport": "^9.0.3",
     "@nestjs/platform-express": "^9.0.0",
+    "@nestjs/platform-socket.io": "^9.3.12",
+    "@nestjs/serve-static": "^3.0.1",
     "@nestjs/swagger": "^6.2.1",
+    "@nestjs/websockets": "^9.3.12",
     "@prisma/client": "^4.11.0",
     "@types/cron": "^2.0.0",
     "bcrypt": "^5.1.0",
+    "better-sqlite3": "^8.2.0",
+    "better-sqlite3-session-store": "^0.1.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "cookie-parser": "^1.4.6",
@@ -48,13 +53,16 @@
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "^7.2.0"
+    "remove": "^0.1.5",
+    "rxjs": "^7.2.0",
+    "socket.io": "^4.6.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^9.2.0",
     "@nestjs/schematics": "^9.0.0",
     "@nestjs/testing": "^9.3.9",
     "@types/bcrypt": "^5.0.0",
+    "@types/better-sqlite3": "^7.6.3",
     "@types/cookie-parser": "^1.4.3",
     "@types/cookiejar": "^2.1.2",
     "@types/cors": "^2.8.13",
@@ -109,5 +117,9 @@
   },
   "prisma": {
     "schema": "src/prisma/schema.prisma"
+  },
+  "optionalDependencies": {
+    "bufferutil": "^4.0.7",
+    "utf-8-validate": "^5.0.10"
   }
 }

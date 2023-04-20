@@ -1,5 +1,8 @@
 .env
 
+# sessions
+sessions.sqlite
+
 # compiled output
 /dist
 /node_modules

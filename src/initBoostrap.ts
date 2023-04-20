@@ -1,6 +1,6 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as session from 'express-session';
+import * as expressSession from 'express-session';
 import * as passport from 'passport';
 import * as cookieParser from 'cookie-parser';
 import * as cors from 'cors';
@@ -19,7 +19,8 @@ export function initBootstrap(app: INestApplication) {
 
   app.use(cookieParser());
 
-  app.use(session(configService.get<mainConfig['session']>('session')));
+  const session = expressSession(configService.get<mainConfig['session']>('session'));
+  app.use(session);
 
   app.use(passport.initialize());
   app.use(passport.session());
