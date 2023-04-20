@@ -1,7 +1,7 @@
 import * as sqlite3 from 'better-sqlite3';
 import { CorsOptions } from 'cors';
 import { SessionOptions } from 'express-session';
-// import { ServerOptions } from 'socket.io';
+import { ServerOptions } from 'socket.io';
 
 // import sqlite from "better-sqlite3"; 
 const SqliteStore = require("better-sqlite3-session-store")(require("express-session"))
@@ -30,7 +30,13 @@ export const mainConfig = () => {
       credentials: true,
       exposedHeaders: ['Content-Type', 'Authorization'],
       allowedHeaders: ['Content-Type', 'Authorization'],
-    } as CorsOptions
+    } as CorsOptions,
+    socketIo: {
+      cors: {
+        origin: '*',
+        credentials: true,
+      } as CorsOptions,
+    } as Partial<ServerOptions>
   } as const;
 };
 

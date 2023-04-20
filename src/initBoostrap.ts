@@ -5,9 +5,12 @@ import * as passport from 'passport';
 import * as cookieParser from 'cookie-parser';
 import * as cors from 'cors';
 import { mainConfig } from './config/main.config';
+import { Server } from 'socket.io';
+import { SocketService } from './socket/socket.service';
 
 export function initBootstrap(app: INestApplication) {
   const configService = app.get(ConfigService);
+  const socketService = app.get(SocketService);
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -26,4 +29,7 @@ export function initBootstrap(app: INestApplication) {
   app.use(passport.session());
 
   app.use(cors(configService.get<mainConfig['cors']>('cors')));
+
+  const io = new Server(app.getHttpServer(), configService.get<mainConfig['socketIo']>('socketIo'));
+  socketService.init(io, session);
 }

@@ -9,9 +9,16 @@ import { mailsConfig } from './config/mails.config';
 import { clientConfig } from './config/client.config';
 import { storageConfig } from './config/storage.config';
 import { StorageModule } from './storage/storage.module';
+import { SocketModule } from './socket/socket.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import { socketConfig } from './config/socket.config';
 
 @Module({
   imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'client'),
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [
@@ -21,11 +28,13 @@ import { StorageModule } from './storage/storage.module';
         mailsConfig,
         clientConfig,
         storageConfig,
+        socketConfig,
       ],
     }),
     UsersModule,
     AuthModule,
     StorageModule,
+    SocketModule,
   ],
   controllers: [],
   providers: [],

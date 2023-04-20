@@ -1,0 +1,28 @@
+<!-- <input type="file" name="file" id="fileinput">
+<button onclick="submit()">Submit</button>
+
+<script>
+  function submit() {
+    fetch('http://localhost:5000/users/b7ab4e62-35b2-493c-84ad-937024bdfa46/avatar', {
+      method: 'PUT',
+      body: document.getElementById('fileinput').files[0]
+    }).then((res) => console.log(res));
+  }
+</script> -->
+
+<script src="http://localhost:5000/socket.io/socket.io.min.js"></script>
+<script>
+  let socket;
+  async function main() {
+    await fetch('http://localhost:5000/auth')
+    socket = io("http://localhost:5000/chat");
+
+    socket.on('ping', (data, e) => {
+      console.log(data);
+      e('pong');
+    })
+
+
+
+  }; main();
+</script>
