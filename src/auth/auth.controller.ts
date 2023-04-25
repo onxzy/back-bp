@@ -99,7 +99,7 @@ export class AuthController {
     @Session() session: ExpressSession,
     @Res({ passthrough: true }) res: Response,
   ) {
-    session.destroy(null);
+    session.destroy(() => null);
     const jwtCookie = this.authService.getJwtCookie();
     res.cookie(jwtCookie.name, '', {
       ...jwtCookie.options,
@@ -141,7 +141,7 @@ export class AuthController {
   ) {
     await this.authService.leave(id, req.user);
 
-    session.destroy(null);
+    session.destroy(() => null);
     const jwtCookie = this.authService.getJwtCookie();
     res.cookie(jwtCookie.name, '', {
       ...jwtCookie.options,
