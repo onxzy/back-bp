@@ -25,7 +25,8 @@ export const authConfig = registerAs(
         removeExpiredCron: '0 * * * *',
       },
       google: {
-        clientID: process.env.GOOGLE_CLIENT_ID,
+        enable: Boolean(process.env.GOOGLE_CLIENT_ID),
+        clientID: process.env.GOOGLE_CLIENT_ID || 'disabled',
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         callbackURL: `${process.env.API_URL}/auth/google`,
         scope: ['email', 'profile'],
