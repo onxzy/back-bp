@@ -107,13 +107,12 @@ describe('UsersController', () => {
       .expect(302);
 
     // Init Storage
-    await storageService.emptyBucket(configService.get<authConfig['avatar']['bucket']>(
-      'auth.avatar.bucket',
-    ))
+    await storageService.emptyBucket(
+      configService.get<authConfig['avatar']['bucket']>('auth.avatar.bucket'),
+    );
   });
 
   describe('admin CRUD', () => {
-  
     describe('findAll', () => {
       it('all', async () => {
         const { body } = await adminSession.get('/users').expect(200);
@@ -122,28 +121,28 @@ describe('UsersController', () => {
           expect.objectContaining(defaultUser),
         ]);
       });
-  
+
       it('admin', async () => {
         const { body } = await adminSession
           .get(`/users?roles=${Role.ADMIN}`)
           .expect(200);
         return expect(body).toEqual([expect.objectContaining(adminUser)]);
       });
-  
+
       it('email', async () => {
         const { body } = await adminSession
           .get(`/users?email=${defaultUser.email}`)
           .expect(200);
         return expect(body).toEqual([expect.objectContaining(defaultUser)]);
       });
-  
+
       it('firstName', async () => {
         const { body } = await adminSession
           .get(`/users?firstName=${defaultUser.firstName}`)
           .expect(200);
         return expect(body).toEqual([expect.objectContaining(defaultUser)]);
       });
-  
+
       it('lastName', async () => {
         const { body } = await adminSession
           .get(`/users?lastName=${defaultUser.lastName}`)
@@ -151,7 +150,7 @@ describe('UsersController', () => {
         return expect(body).toEqual([expect.objectContaining(defaultUser)]);
       });
     });
-  
+
     it('create', async () => {
       const { body } = await adminSession
         .post(`/users`)
@@ -166,14 +165,14 @@ describe('UsersController', () => {
       createUser.id = body.id;
       return expect(body).toEqual(expect.objectContaining(createUser));
     });
-  
+
     it('findOneByEmail', async () => {
       const { body } = await adminSession
         .get(`/users/email/${createUser.email}`)
         .expect(200);
       return expect(body).toEqual(expect.objectContaining(createUser));
     });
-  
+
     it('patch', async () => {
       await adminSession
         .patch(`/users/${createUser.id}`)
@@ -181,10 +180,10 @@ describe('UsersController', () => {
           firstName: `${createUser.firstName}-updated`,
         })
         .expect(200);
-  
+
       return;
     });
-  
+
     it('findOneById patched', async () => {
       const { body } = await adminSession
         .get(`/users/${createUser.id}`)
@@ -196,13 +195,13 @@ describe('UsersController', () => {
         }),
       );
     });
-  
+
     it('delete', async () => {
       await adminSession.delete(`/users/${createUser.id}`).expect(200);
       await adminSession.get(`/users/${createUser.id}`).expect(404);
       return;
     });
-  })
+  });
 
   describe('user CRUD', () => {
     it('protected', () => {
@@ -211,61 +210,64 @@ describe('UsersController', () => {
 
     describe('avatar', () => {
       it('no avatar', async () => {
-        await userSession.get(`/users/${defaultUser.id}/avatar`).redirects(1).expect(404);
-      })
-      
+        await userSession
+          .get(`/users/${defaultUser.id}/avatar`)
+          .redirects(1)
+          .expect(404);
+      });
+
       it('put avatar', async () => {
-        const { headers } = await userSession.put(`/users/${defaultUser.id}/avatar`).expect(302)
+        const { headers } = await userSession
+          .put(`/users/${defaultUser.id}/avatar`)
+          .expect(302);
         expect(headers.location).toBeDefined();
 
-        const { size: fileSize, } = statSync(avatarPath)
+        const { size: fileSize } = statSync(avatarPath);
         const { status } = await fetch(headers.location, {
           method: 'PUT',
           body: avatarFile,
           headers: {
             'Content-length': String(fileSize),
-            'Content-type': mime.getType(avatarPath)
+            'Content-type': mime.getType(avatarPath),
           },
-        })
+        });
         expect(status).toBe(200);
-      })
-  
+      });
+
       it('get avatar', async () => {
-        const { body } =
-          await userSession.get(`/users/${defaultUser.id}/avatar`)
-            .redirects(1)
-            .expect(200);
+        const { body } = await userSession
+          .get(`/users/${defaultUser.id}/avatar`)
+          .redirects(1)
+          .expect(200);
         expect(body).toStrictEqual(avatarFile);
-      })
+      });
 
       it('get avatar (anon)', async () => {
-        const { body } =
-          await anonSession.get(`/users/${defaultUser.id}/avatar`)
-            .redirects(1)
-            .expect(200);
+        const { body } = await anonSession
+          .get(`/users/${defaultUser.id}/avatar`)
+          .redirects(1)
+          .expect(200);
         expect(body).toStrictEqual(avatarFile);
-      })
-  
+      });
+
       it('delete avatar', async () => {
         await userSession.delete(`/users/${defaultUser.id}/avatar`).expect(200);
-      })
-  })
-
-  describe('anon CRUD', () => {
-    it('protected', () => {
-      return anonSession.get('/users').expect(401);
+      });
     });
-  })
 
-  
-  })
+    describe('anon CRUD', () => {
+      it('protected', () => {
+        return anonSession.get('/users').expect(401);
+      });
+    });
+  });
 
   afterAll(async () => {
     await app.close();
     await prisma.user.deleteMany({});
-    await storageService.emptyBucket(configService.get<authConfig['avatar']['bucket']>(
-      'auth.avatar.bucket',
-    ))
+    await storageService.emptyBucket(
+      configService.get<authConfig['avatar']['bucket']>('auth.avatar.bucket'),
+    );
     return;
   });
 });

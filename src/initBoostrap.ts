@@ -22,7 +22,9 @@ export function initBootstrap(app: INestApplication) {
 
   app.use(cookieParser());
 
-  const session = expressSession(configService.get<mainConfig['session']>('session'));
+  const session = expressSession(
+    configService.get<mainConfig['session']>('session'),
+  );
   app.use(session);
 
   app.use(passport.initialize());
@@ -30,6 +32,9 @@ export function initBootstrap(app: INestApplication) {
 
   app.use(cors(configService.get<mainConfig['cors']>('cors')));
 
-  const io = new Server(app.getHttpServer(), configService.get<mainConfig['socketIo']>('socketIo'));
+  const io = new Server(
+    app.getHttpServer(),
+    configService.get<mainConfig['socketIo']>('socketIo'),
+  );
   socketService.init(io, session);
 }
