@@ -171,9 +171,11 @@ export class StorageService {
   }
 
   async emptyBucket(bucket: BucketName) {
-    const { Contents } = await this.s3.send(new ListObjectsCommand({
-      Bucket: bucket
-    }))
+    const { Contents } = await this.s3.send(
+      new ListObjectsCommand({
+        Bucket: bucket,
+      }),
+    );
     if (!Contents) return;
     for (const o of Contents) {
       await this.delete(bucket, o.Key);

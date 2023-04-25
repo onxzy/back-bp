@@ -10,7 +10,6 @@ import {
   ConflictException,
   Query,
   NotFoundException,
-  Req,
   Put,
   Res,
 } from '@nestjs/common';
@@ -24,7 +23,7 @@ import { RolesGuard } from '../auth/guards/role.guard';
 import { FindUsersDto } from './dto/find-users.input';
 import { UserDto } from './dto/user';
 import { UpdateUserDto } from './dto/update-user.input';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { RolesOrSelfGuard } from '../auth/guards/role-or-self.guard';
 
 @ApiTags('Users')
