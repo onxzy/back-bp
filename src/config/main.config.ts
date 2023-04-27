@@ -12,6 +12,7 @@ export const mainConfig = () => {
   return {
     port,
     apiUrl: process.env.API_URL || `http://localhost:${port}`,
+    // FIXME: Use memory store for tests
     session: {
       store: new SqliteStore({
         client: db,
