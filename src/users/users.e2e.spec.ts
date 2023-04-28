@@ -95,14 +95,14 @@ describe('UsersController', () => {
     adminSession = supertest.agent(app.getHttpServer());
     await adminSession
       .get(
-        `/auth/login?email=${adminUser.email}&password=test-users_controller-admin-password`,
+        `/auth/login?email=${adminUser.email}&password=${adminUser_password}`,
       )
       .expect(302);
 
     userSession = supertest.agent(app.getHttpServer());
     await userSession
       .get(
-        `/auth/login?email=${defaultUser.email}&password=test-users_controller-default-password`,
+        `/auth/login?email=${defaultUser.email}&password=${defaultUser_password}`,
       )
       .expect(302);
 
