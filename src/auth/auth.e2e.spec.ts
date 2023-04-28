@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { initBootstrap } from '../initBoostrap';
+import { initApp } from '../initApp';
 import {
   PrismaClient,
   Provider,
@@ -28,7 +28,7 @@ describe('AuthController', () => {
     configService = moduleFixture.get<ConfigService>(ConfigService);
 
     app = moduleFixture.createNestApplication();
-    initBootstrap(app);
+    initApp(app);
     await app.init();
     request = supertest.agent(app.getHttpServer());
   });

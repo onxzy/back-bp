@@ -6,7 +6,7 @@ import * as cors from 'cors';
 import { mainConfig } from './config/main.config';
 import { AppSession } from './session';
 
-export function initBootstrap(app: INestApplication) {
+export function initApp(app: INestApplication) {
   const configService = app.get(ConfigService);
 
   app.useGlobalPipes(

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { initBootstrap } from '../initBoostrap';
+import { initApp } from '../initApp';
 import { PrismaClient, Provider, Role } from '@prisma/client';
 import { hashSync } from 'bcrypt';
 import * as supertest from 'supertest';
@@ -65,7 +65,7 @@ describe('UsersController', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    initBootstrap(app);
+    initApp(app);
     await app.init();
     configService = moduleFixture.get<ConfigService>(ConfigService);
     storageService = moduleFixture.get<StorageService>(StorageService);
