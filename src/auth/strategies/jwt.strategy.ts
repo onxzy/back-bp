@@ -13,8 +13,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private userSerializer: UserSerializer,
   ) {
     super({
-      jwtFromRequest: (req: Request) =>
-        req.cookies[configService.get('auth.jwt.cookieName')],
+      jwtFromRequest: (req: Request) => {
+        const cookieName = configService.get('auth.jwt.cookieName');
+        if (req.cookies) return req.cookies[cookieName];
+        return;
+      },
       ignoreExpiration: false,
       secretOrKey: configService.get('auth.jwt.secret'),
     });

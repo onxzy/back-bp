@@ -15,12 +15,25 @@
   let socket;
   async function main() {
     await fetch('http://localhost:5000/auth')
-    socket = io("http://localhost:5000/chat");
+    socket = io("http://localhost:5000/chat", { transports: ["websocket"], withCredentials: true });
 
     socket.on('ping', (data, e) => {
       console.log(data);
       e('pong');
     })
+
+    socket.on('exception', (data, e) => {
+      console.log(data);
+    })
+
+    // socket.emit('msg', 'coucou', (res) => {
+    //   console.log(res);
+    // })
+
+    socket.emit('checkauth', (res) => {
+      console.log(res);
+    })
+
 
 
 

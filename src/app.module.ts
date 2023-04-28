@@ -22,6 +22,7 @@ import { socketConfig } from './config/socket.config';
     ConfigModule.forRoot({
       isGlobal: true,
       expandVariables: true,
+      cache: true,
       load: [
         mainConfig,
         authConfig,
