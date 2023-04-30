@@ -14,8 +14,8 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { AuthenticatedGuard } from '../auth/guards/authenticated.guard';
-import { SocketService, UserSocket } from './socket.service';
-import { HttpExceptionsFilter } from './filters/catch.filter';
+import { HttpExceptionsFilter } from '../socket/filters/catch.filter';
+import { SocketService, UserSocket } from '../socket/socket.service';
 
 @UsePipes(new ValidationPipe())
 @UseFilters(new HttpExceptionsFilter())

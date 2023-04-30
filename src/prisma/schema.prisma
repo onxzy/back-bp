@@ -28,15 +28,18 @@ model User {
   lastName    String
   isVerified  Boolean   @default(false)
 
+  provider    Provider  @default(email)
+  roles       Role[]    @default([USER])
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt @default(now())
   loggedInAt  DateTime  @default(now())
 
-  roles       Role[]    @default([USER])
-
-  provider    Provider  @default(email)
-
   userTokens  User_Tokens[]
+
+  chats       Chat[]
+  messages    Message[]
+
+  chatProperties  ChatProperties[]
 }
 
 enum TokenType {
@@ -47,10 +50,55 @@ enum TokenType {
 model User_Tokens {
   id          String    @id @unique @default(uuid())
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String    // FIXME: Unique constraint on userId & type
+  userId      String
   type        TokenType
-  expiration  DateTime
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt @default(now())
+  expiration  DateTime
+
+  @@unique([userId, type])
+}
+
+enum ChatType {
+  PRIVATE // Private chat between 2 users
+  GROUP   // More than 2 users
+}
+
+model Chat {
+  id          String            @id @unique @default(uuid())
+  type        ChatType          @default(PRIVATE)
+  members     User[]
+  messages    Message[]
+
+  title       String?
+
+  properties    ChatProperties  @relation(fields: [propertiesId], references: [id], onDelete: Cascade)
+  propertiesId  String          @unique
+
+  @@index(fields: [id, type]) 
+}
+
+model ChatProperties {
+  id              String        @id @unique @default(uuid())
+  admins          User[]
+
+  chat            Chat?
+}
+
+model Message {
+  id              BigInt        @id @unique @default(autoincrement())
+  sender          User?         @relation(fields: [senderId], references: [id], onDelete: SetNull)
+  senderId        String?
+  chat            Chat          @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  chatId          String
+
+  body            Json
+  createdAt       DateTime      @default(now())
+
+  replies         Message[]     @relation("Reply")
+  replyTo         Message?      @relation("Reply", fields: [replyToId], references: [id])
+  replyToId       BigInt?      
+
+  @@index(fields: [chatId, createdAt(sort: Desc)]) 
 }

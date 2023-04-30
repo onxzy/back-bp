@@ -9,10 +9,10 @@ import { mailsConfig } from './config/mails.config';
 import { clientConfig } from './config/client.config';
 import { storageConfig } from './config/storage.config';
 import { StorageModule } from './storage/storage.module';
-import { SocketModule } from './socket/socket.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { socketConfig } from './config/socket.config';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -36,7 +36,7 @@ import { socketConfig } from './config/socket.config';
     UsersModule,
     AuthModule,
     StorageModule,
-    SocketModule,
+    ChatModule,
   ],
   controllers: [],
   providers: [],
