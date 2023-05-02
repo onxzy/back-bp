@@ -15,3 +15,5 @@ export class MemberNotInChat extends CustomError {}
 export class CreatePrivateWithSelfError extends CustomError {}
 export class MultiplePrivateWithUserError extends CustomError {}
 export class MoreThan2InPrivateError extends CustomError {}
+
+export class RepliedIdNotFound extends CustomError {}

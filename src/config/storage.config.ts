@@ -29,6 +29,9 @@ export const storageConfig = registerAs('storage', () => {
         },
       },
       {
+        name: 'chat',
+      },
+      {
         name: 'example',
         policy: {
           raw: {}, // raw override anything else in .policy

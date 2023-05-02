@@ -86,19 +86,25 @@ model ChatProperties {
   chat            Chat?
 }
 
+enum MessageType {
+  STANDARD
+  EVENT
+}
+
 model Message {
-  id              BigInt        @id @unique @default(autoincrement())
+  id              Int           @id @default(autoincrement())
   sender          User?         @relation(fields: [senderId], references: [id], onDelete: SetNull)
   senderId        String?
   chat            Chat          @relation(fields: [chatId], references: [id], onDelete: Cascade)
   chatId          String
 
+  type            MessageType   @default(STANDARD)
   body            Json
   createdAt       DateTime      @default(now())
 
   replies         Message[]     @relation("Reply")
-  replyTo         Message?      @relation("Reply", fields: [replyToId], references: [id])
-  replyToId       BigInt?      
+  replyTo         Message?      @relation("Reply", fields: [replyToId], references: [id], onDelete: SetNull)
+  replyToId       Int?      
 
   @@index(fields: [chatId, createdAt(sort: Desc)]) 
 }

@@ -171,6 +171,7 @@ export class UsersService {
   avatar(userId: string) {
     return {
       get: () =>
+        // FIXME: Check with authConfig avatar public ?
         this.storageService.getObjectUrl(
           this.configService.get<authConfig['avatar']['bucket']>(
             'auth.avatar.bucket',

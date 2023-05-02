@@ -1,0 +1,1 @@
+export const JOIN_CHAT_EVENT = 'JOIN_CHAT_EVENT';

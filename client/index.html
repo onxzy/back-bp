@@ -13,29 +13,35 @@
 <script src="http://localhost:5000/socket.io/socket.io.min.js"></script>
 <script>
   let socket;
+  let chatId;
   async function main() {
     await fetch('http://localhost:5000/auth')
     socket = io("http://localhost:5000/chat", { transports: ["websocket"], withCredentials: true });
 
-    socket.on('ping', (data, e) => {
-      console.log(data);
-      e('pong');
-    })
-
-    socket.on('exception', (data, e) => {
+    socket.on('exception', (data) => {
       console.log(data);
     })
 
-    // socket.emit('msg', 'coucou', (res) => {
-    //   console.log(res);
-    // })
+    socket.on('RECEIVE_MESSAGE_EVENT', (data) => {
+      console.log(data);
+    })
+  }; main();
 
-    socket.emit('checkauth', (res) => {
+  function join(id) {
+    chatId = id;
+    socket.emit('JOIN_CHAT_EVENT', chatId, (res) => {
       console.log(res);
     })
+  }
 
-
-
-
-  }; main();
+  function send(txt) {
+    socket.emit('SEND_MESSAGE_EVENT', {
+      chatId,
+      body: {
+        txt,
+      }
+    }, (res) => {
+      console.log(res);
+    })
+  }
 </script>

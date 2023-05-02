@@ -9,6 +9,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -29,6 +30,7 @@ import {
 import { RemoveFromChatDto } from './dto/controller/remove-from-chat.input';
 import { ChatMemberGuard } from './guards/chat-member.guard';
 import { ChatAdminGuard } from './guards/chat-admin.guard';
+import { GetMessagesOptionsDto } from './dto/controller/get-messages-options.input';
 
 @ApiTags('Chat')
 @Controller('chat')
@@ -103,10 +105,18 @@ export class ChatController {
 
   @Patch('group/:id/members/add')
   @UseGuards(AuthenticatedGuard, ChatAdminGuard)
-  async addToGroup(@Param('id') id: string, @Body() data: AddToChatDto) {
+  async addToGroup(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Body() data: AddToChatDto,
+  ) {
     if (data.membersToAdd.length == 0) throw new BadRequestException();
     try {
-      return await this.chatService.addToGroup(id, data.membersToAdd);
+      return await this.chatService.addToGroup(
+        id,
+        req.user.id,
+        data.membersToAdd,
+      );
     } catch (error) {
       if (error instanceof ChatNotFoundError)
         throw new NotFoundException(error);
@@ -124,11 +134,16 @@ export class ChatController {
   @UseGuards(AuthenticatedGuard, ChatAdminGuard)
   async removeFromGroup(
     @Param('id') id: string,
+    @Req() req: Request,
     @Body() data: RemoveFromChatDto,
   ) {
     if (data.membersToRemove.length == 0) throw new BadRequestException();
     try {
-      return await this.chatService.removeFromGroup(id, data.membersToRemove);
+      return await this.chatService.removeFromGroup(
+        id,
+        req.user.id,
+        data.membersToRemove,
+      );
     } catch (error) {
       if (error instanceof ChatNotFoundError)
         throw new NotFoundException(error);
@@ -154,5 +169,17 @@ export class ChatController {
         throw new BadRequestException(error);
       throw error;
     }
+  }
+
+  @Get(':id/messages')
+  async getMessages(
+    @Param('id') chatId: string,
+    @Query() query: GetMessagesOptionsDto,
+  ) {
+    return await this.chatService.getMessages(
+      chatId,
+      query.number,
+      query.cursor,
+    );
   }
 }

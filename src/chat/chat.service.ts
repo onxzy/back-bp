@@ -1,6 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Chat, ChatType, Prisma, User } from '@prisma/client';
+import {
+  Chat,
+  ChatType,
+  MessageType,
+  Message as MessageWithJsonBody,
+  Prisma,
+  User,
+} from '@prisma/client';
 import {
   ChatNotFoundError,
   CreatePrivateWithSelfError,
@@ -9,11 +16,75 @@ import {
   MemberNotInChat,
   MoreThan2InPrivateError,
   MultiplePrivateWithUserError,
+  RepliedIdNotFound,
   WrongChatTypeError,
 } from './chat.service.error';
+import { UserSocket } from '../socket/socket.service';
+import { Server } from 'socket.io';
+import { RECEIVE_MESSAGE_EVENT } from './dto/gateway/receive-message.output';
+
+export type Message<
+  T extends MessageType = MessageType,
+  E extends MessageEventType = MessageEventType,
+> = Omit<MessageWithJsonBody, 'body'> & {
+  body: MessageBody<T, E>;
+};
+
+export type MessageAttachment = {
+  name: string;
+  object: string;
+};
+
+export enum MessageEventType {
+  MEMBERS_ADDED = 'MEMBERS_ADDED',
+  MEMBERS_REMOVED = 'MEMBERS_REMOVED',
+  TITLE_UPDATED = 'TITLE_UPDATED',
+  GROUP_CREATED = 'GROUP_CREATED',
+}
+
+export type MessageEventPayload<E extends MessageEventType = MessageEventType> =
+  E extends MessageEventType.MEMBERS_ADDED | MessageEventType.MEMBERS_REMOVED
+    ? {
+        by?: string;
+        membersId: string[];
+      }
+    : E extends MessageEventType.TITLE_UPDATED
+    ? {
+        by?: string;
+        old: Chat['title'];
+        new: Chat['title'];
+      }
+    : E extends MessageEventType.GROUP_CREATED
+    ? {
+        by?: string;
+      }
+    : null;
+
+export type MessageBody<
+  T extends MessageType,
+  E extends MessageEventType,
+> = T extends 'STANDARD'
+  ? {
+      txt: string;
+      attachments?: MessageAttachment[];
+    }
+  : {
+      type: MessageEventType;
+      data: MessageEventPayload<E>;
+    };
+
+export type NewMessage<
+  T extends MessageType = MessageType,
+  E extends MessageEventType = MessageEventType,
+> = {
+  body: MessageBody<T, E>;
+  replyToId?: number;
+};
 
 @Injectable()
 export class ChatService {
+  server: Server;
+
   constructor(private readonly prisma: PrismaService) {}
 
   async getPrivate(userId: string, otherUserId: string) {
@@ -91,10 +162,24 @@ export class ChatService {
     const newMembers = membersToAdd.filter((id) => !oldMembers.includes(id));
     if (newMembers.length == 0) throw new EmptyNewMembersError();
 
-    return this.createGroup(oldMembers.concat(newMembers), [ownerId]);
+    const chat = await this.createGroup(oldMembers.concat(newMembers), [
+      ownerId,
+    ]);
+
+    await this.saveMessages(chat.id, ownerId, [
+      {
+        body: {
+          type: MessageEventType.GROUP_CREATED,
+          data: {
+            by: ownerId,
+          },
+        },
+      } as NewMessage<'EVENT', MessageEventType.GROUP_CREATED>,
+    ]);
+    return chat;
   }
 
-  async addToGroup(id: string, membersToAdd: string[]) {
+  async addToGroup(id: string, byId: string, membersToAdd: string[]) {
     if (membersToAdd.length == 0) throw new EmptyMembersToAddError();
 
     const groupChat = await this.getChat(id);
@@ -105,10 +190,24 @@ export class ChatService {
     const newMembers = membersToAdd.filter((id) => !oldMembers.includes(id));
     if (newMembers.length == 0) throw new EmptyNewMembersError();
 
-    return await this.updateChat(id, newMembers, [], undefined);
+    const chat = await this.updateChat(id, newMembers, [], undefined);
+
+    await this.saveMessages(chat.id, byId, [
+      {
+        body: {
+          type: MessageEventType.MEMBERS_ADDED,
+          data: {
+            by: byId,
+            membersId: newMembers,
+          },
+        },
+      } as NewMessage<'EVENT', MessageEventType.MEMBERS_ADDED>,
+    ]);
+
+    return chat;
   }
 
-  async removeFromGroup(id: string, membersToRemove: string[]) {
+  async removeFromGroup(id: string, byId: string, membersToRemove: string[]) {
     const groupChat = await this.getChat(id);
     if (!groupChat) throw new ChatNotFoundError();
     if (groupChat.type != ChatType.GROUP) throw new WrongChatTypeError();
@@ -120,6 +219,18 @@ export class ChatService {
     if (notInGroupMembers.length != 0) throw new MemberNotInChat();
 
     const chat = await this.updateChat(id, [], membersToRemove, undefined);
+
+    await this.saveMessages(chat.id, byId, [
+      {
+        body: {
+          type: MessageEventType.MEMBERS_REMOVED,
+          data: {
+            by: byId,
+            membersId: membersToRemove,
+          },
+        },
+      } as NewMessage<'EVENT', MessageEventType.MEMBERS_REMOVED>,
+    ]);
 
     if (chat.members.length == 0) {
       await this.deleteGroup(id);
@@ -329,7 +440,92 @@ export class ChatService {
     return await this.prisma.chat.delete({ where: { id } });
   }
 
-  // Save Message
-  // Get Messages
-  // Delete Message
+  async saveMessages(
+    chatId: string,
+    senderId: string,
+    newMessages: NewMessage[],
+  ) {
+    const chat = await this.getChat(chatId);
+    if (!chat) throw new ChatNotFoundError();
+    if (!chat.members.map((m) => m.id).includes(senderId))
+      throw new MemberNotInChat();
+
+    // Remove repliedTo not in same chatId
+    const replyToIds = newMessages.map((m) => m.replyToId).filter((v) => v);
+    const repliedMessages = await this.prisma.message.findMany({
+      where: {
+        id: {
+          in: replyToIds,
+        },
+      },
+    });
+    if (replyToIds.length != repliedMessages.length)
+      throw new RepliedIdNotFound();
+    const replyToIdsToRemove = repliedMessages.map((r) => {
+      if (r.chatId != chatId) return r.id;
+    });
+    const newMessagesWithoutBadReplies = newMessages.map((m) => {
+      if (!replyToIdsToRemove.includes(m.replyToId)) return m;
+      return { body: m.body };
+    });
+
+    const messages = (await this.prisma.$transaction(
+      newMessagesWithoutBadReplies.map((msg) =>
+        this.prisma.message.create({
+          data: {
+            chatId,
+            senderId,
+            body: msg.body,
+            replyToId: msg.replyToId,
+          },
+        }),
+      ),
+    )) as Message[];
+
+    this.sendMessages(chatId, messages);
+  }
+
+  sendMessages(chatId: string, messages: Message[]) {
+    this.server
+      .to(this.buildSocketRoomId(chatId, 'rid'))
+      .emit(RECEIVE_MESSAGE_EVENT, messages);
+  }
+
+  async getMessages(chatId: string, number = 20, cursor: number = undefined) {
+    const messages = (await this.prisma.message.findMany({
+      where: { chatId },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      skip: cursor ? 1 : undefined,
+      take: number,
+      cursor: cursor
+        ? {
+            id: cursor,
+          }
+        : undefined,
+    })) as Message[];
+    return messages;
+  }
+
+  async deleteMessage(id: number) {
+    return await this.prisma.message.update({
+      where: {
+        id,
+      },
+      data: {
+        body: {},
+      },
+    });
+  }
+
+  buildSocketRoomId(id: string, type: 'uid' | 'rid') {
+    return type + '.' + id;
+  }
+
+  socketLog(socket: UserSocket, msg: string) {
+    console.debug(
+      `[Chat] ${socket.userId ? socket.user.email : '0'} @${socket.id} ${msg}`,
+    );
+  }
 }
