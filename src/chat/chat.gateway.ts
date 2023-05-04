@@ -81,6 +81,4 @@ export class ChatGateway {
     this.chatService.socketLog(socket, `${sendMessage.chatId} New message`);
     return true;
   }
-
-  // On removed if self remove from room
 }

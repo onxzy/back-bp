@@ -232,6 +232,10 @@ export class ChatService {
       } as NewMessage<'EVENT', MessageEventType.MEMBERS_REMOVED>,
     ]);
 
+    for (const memberToRemoveId of membersToRemove) {
+      this.server.in(this.buildSocketRoomId(memberToRemoveId, 'uid')).socketsLeave(this.buildSocketRoomId(id, 'rid'));
+    }
+
     if (chat.members.length == 0) {
       await this.deleteGroup(id);
       return {
