@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotImplementedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   Chat,
@@ -22,6 +22,10 @@ import {
 import { UserSocket } from '../socket/socket.service';
 import { Server } from 'socket.io';
 import { RECEIVE_MESSAGE_EVENT } from './dto/gateway/receive-message.output';
+import { StorageService } from '../storage/storage.service';
+import { ConfigService } from '@nestjs/config';
+import { storageConfig } from '../config/storage.config';
+import { randomUUID } from 'crypto';
 
 export type Message<
   T extends MessageType = MessageType,
@@ -85,7 +89,11 @@ export type NewMessage<
 export class ChatService {
   server: Server;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storageService: StorageService,
+    private readonly configService: ConfigService,
+  ) {}
 
   async getPrivate(userId: string, otherUserId: string) {
     if (userId == otherUserId) throw new CreatePrivateWithSelfError(userId);
@@ -233,7 +241,9 @@ export class ChatService {
     ]);
 
     for (const memberToRemoveId of membersToRemove) {
-      this.server.in(this.buildSocketRoomId(memberToRemoveId, 'uid')).socketsLeave(this.buildSocketRoomId(id, 'rid'));
+      this.server
+        .in(this.buildSocketRoomId(memberToRemoveId, 'uid'))
+        .socketsLeave(this.buildSocketRoomId(id, 'rid'));
     }
 
     if (chat.members.length == 0) {
@@ -250,6 +260,7 @@ export class ChatService {
   }
 
   // TODO: Update Group Properties
+
   async deleteGroup(id: string) {
     const groupChat = await this.getChat(id);
     if (!groupChat) throw new ChatNotFoundError();
@@ -441,6 +452,7 @@ export class ChatService {
 
   // TODO: Check: delete messages, don't delete users
   private async deleteChat(id: string) {
+    // TODO: Delete attachments
     return await this.prisma.chat.delete({ where: { id } });
   }
 
@@ -532,4 +544,43 @@ export class ChatService {
       `[Chat] ${socket.userId ? socket.user.email : '0'} @${socket.id} ${msg}`,
     );
   }
+
+  attachments = (chatId: string) => {
+    const bucket = 'chat';
+    const buildFilekey = (filename: string) => {
+      const now = new Date();
+      const formatdate = `${now.getUTCFullYear()}${String(
+        now.getUTCMonth(),
+      ).padStart(2, '0')}${String(now.getUTCDate()).padStart(2, '0')}-${String(
+        now.getUTCHours(),
+      ).padStart(2, '0')}${String(now.getUTCMinutes()).padStart(
+        2,
+        '0',
+      )}${String(now.getUTCSeconds()).padStart(2, '0')}`;
+
+      return `${formatdate}_${randomUUID()}.${filename.split('.').pop()}`;
+    };
+
+    return {
+      buildFilekey,
+      getCommandLink: () => ({
+        put: (ownerId: string, filename: string) => {
+          const filekey = buildFilekey(filename);
+          return {
+            filekey,
+            putUrl: this.storageService
+              .presignUrl(bucket, `${chatId}/${filekey}`)
+              .put(this.configService.get('storage.presign.expiration.put'), {
+                ownerId,
+              }),
+          };
+        },
+        get: (filekey: string) =>
+          this.storageService.presignUrl(bucket, `${chatId}/${filekey}`).get(),
+      }),
+      get: (marker: string = undefined) => {
+        return this.storageService.getObjectList(bucket, chatId, marker);
+      },
+    };
+  };
 }

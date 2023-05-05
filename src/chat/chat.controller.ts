@@ -6,16 +6,19 @@ import {
   ForbiddenException,
   Get,
   NotFoundException,
+  NotImplementedException,
   Param,
   Patch,
   Post,
+  Put,
   Query,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { AuthenticatedGuard } from '../auth/guards/authenticated.guard';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { AddToChatDto } from './dto/controller/add-to-chat.input';
 import { UsersService } from '../users/users.service';
 import { ApiTags } from '@nestjs/swagger';
@@ -181,5 +184,46 @@ export class ChatController {
       query.number,
       query.cursor,
     );
+  }
+
+  @Get(':id/attachments')
+  @UseGuards(AuthenticatedGuard, ChatMemberGuard)
+  async getAttachments(
+    @Param('id') id: string,
+    @Query('marker') marker: string = undefined,
+  ) {
+    return this.chatService.attachments(id).get(marker);
+  }
+
+  @Put(':id/attachments/:filename')
+  @UseGuards(AuthenticatedGuard, ChatMemberGuard)
+  putAttachment(
+    @Param('id') id: string,
+    @Param('filename') filename: string,
+    @Req() req: Request,
+  ) {
+    return this.chatService
+      .attachments(id)
+      .getCommandLink()
+      .put(req.user.id, filename);
+  }
+
+  @Get(':id/attachments/:filekey')
+  @UseGuards(AuthenticatedGuard, ChatMemberGuard)
+  async getAttachment(
+    @Param('id') id: string,
+    @Param('filekey') filekey: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    // TODO: Check if throw error on object not found
+    res.redirect(
+      await this.chatService.attachments(id).getCommandLink().get(filekey),
+    );
+  }
+
+  @Delete(':id/attachments/:userId/:filename')
+  @UseGuards(AuthenticatedGuard, ChatMemberGuard)
+  async deleteAttachment() {
+    throw new NotImplementedException();
   }
 }

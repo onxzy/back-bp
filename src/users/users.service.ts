@@ -180,7 +180,7 @@ export class UsersService {
         ),
       put: async () =>
         this.storageService
-          .presign(
+          .presignUrl(
             this.configService.get<authConfig['avatar']['bucket']>(
               'auth.avatar.bucket',
             ),
@@ -188,7 +188,7 @@ export class UsersService {
           )
           .put(3600),
       delete: () =>
-        this.storageService.delete(
+        this.storageService.deleteObject(
           this.configService.get<authConfig['avatar']['bucket']>(
             'auth.avatar.bucket',
           ),

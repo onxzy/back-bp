@@ -3,6 +3,7 @@ import {
   CanActivate,
   ExecutionContext,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { ChatService } from '../../chat/chat.service';
@@ -13,6 +14,7 @@ export class ChatMemberGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext) {
     const req = context.switchToHttp().getRequest<Request>();
+    if (!req.params.id) throw new BadRequestException();
     const chat = await this.chatService.getChat(req.params.id);
     if (!chat) throw new NotFoundException();
     return chat.members.map((m) => m.id).includes(req.user.id);

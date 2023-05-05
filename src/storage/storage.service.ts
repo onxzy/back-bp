@@ -104,13 +104,27 @@ export class StorageService {
     }
   }
 
+  async getObjectList(
+    Bucket: BucketName,
+    Prefix: string = undefined,
+    Marker: string = undefined,
+  ) {
+    return await this.s3.send(
+      new ListObjectsCommand({
+        Bucket,
+        Prefix,
+        Marker,
+      }),
+    );
+  }
+
   getObjectUrl(bucket: BucketName, key: string) {
     return `${this.configService.get<storageConfig['endpoint']>(
       'storage.endpoint',
     )}/${bucket}/${key}`;
   }
 
-  put(
+  putObject(
     bucket: BucketName,
     key: string,
     body: PutObjectRequest['Body'] | string | Uint8Array | Buffer,
@@ -124,7 +138,7 @@ export class StorageService {
     );
   }
 
-  get(bucket: BucketName, key: string) {
+  getObject(bucket: BucketName, key: string) {
     return this.s3.send(
       new GetObjectCommand({
         Bucket: bucket,
@@ -133,7 +147,7 @@ export class StorageService {
     );
   }
 
-  delete(bucket: BucketName, key: string) {
+  deleteObject(bucket: BucketName, key: string) {
     return this.s3.send(
       new DeleteObjectCommand({
         Bucket: bucket,
@@ -142,7 +156,7 @@ export class StorageService {
     );
   }
 
-  presign(bucket: BucketName, key: string) {
+  presignUrl(bucket: BucketName, key: string) {
     const signUrl = (
       command: any,
       expiresIn: number = this.configService.get(
@@ -166,11 +180,13 @@ export class StorageService {
         expiresIn: number = this.configService.get(
           'storage.presign.expiration.put',
         ),
-      ) => signUrl(PutObjectCommand, expiresIn),
+        Metadata: Record<string, string> = undefined,
+      ) => signUrl(PutObjectCommand, expiresIn, { Metadata }),
     };
   }
 
   async emptyBucket(bucket: BucketName) {
+    // FIXME: Pagination
     const { Contents } = await this.s3.send(
       new ListObjectsCommand({
         Bucket: bucket,
@@ -178,7 +194,7 @@ export class StorageService {
     );
     if (!Contents) return;
     for (const o of Contents) {
-      await this.delete(bucket, o.Key);
+      await this.deleteObject(bucket, o.Key);
     }
   }
 
