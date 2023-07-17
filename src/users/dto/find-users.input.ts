@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Provider, Role } from '@prisma/client';
-import { IsEmail, IsIn, IsOptional, IsString, Length } from 'class-validator';
+import { IsArray, IsEmail, IsIn, IsOptional, IsString, Length } from 'class-validator';
 
 export class FindUsersDto {
   @ApiPropertyOptional()
@@ -22,7 +22,7 @@ export class FindUsersDto {
 
   @ApiPropertyOptional({ enum: Role, isArray: true })
   @IsOptional()
-  @IsIn(Object.values(Role))
+  @IsIn(Object.values(Role), { each: true })
   roles?: Role[];
 
   @ApiPropertyOptional({ enum: Provider })

@@ -34,6 +34,6 @@ export class UpdateUserDto {
 
   @ApiPropertyOptional({ enum: Role, isArray: true })
   @IsOptional()
-  @IsIn(Object.values(Role))
+  @IsIn(Object.values(Role), { each: true })
   roles?: Role[];
 }

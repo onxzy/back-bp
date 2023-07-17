@@ -124,7 +124,7 @@ describe('UsersController', () => {
 
       it('admin', async () => {
         const { body } = await adminSession
-          .get(`/users?roles=${Role.ADMIN}`)
+          .get(`/users?roles[]=${Role.ADMIN}`)
           .expect(200);
         return expect(body).toEqual([expect.objectContaining(adminUser)]);
       });
