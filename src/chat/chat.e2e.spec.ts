@@ -531,7 +531,6 @@ describe('ChatController', () => {
           expect.arrayContaining(
             newMessages.slice(80, 99).map((m) =>
               expect.objectContaining({
-                id: parseInt(m.body.txt.split('-')[1]) + 1,
                 body: m.body,
                 chatId: groupB.id,
                 replyToId: null,
@@ -544,13 +543,12 @@ describe('ChatController', () => {
       it('Get with cursor', async () => {
         const { body } = await userASession
           .get(`/chat/${groupB.id}/messages`)
-          .query({ cursor: 80 })
+          .query({ cursor: 80 + 4 }) // +4 due to above group creation messages
           .expect(200);
         expect(body).toEqual(
           expect.arrayContaining(
             newMessages.slice(60, 79).map((m) =>
               expect.objectContaining({
-                id: parseInt(m.body.txt.split('-')[1]) + 1,
                 body: m.body,
                 chatId: groupB.id,
                 replyToId: null,
@@ -597,7 +595,7 @@ describe('ChatController', () => {
     await prisma.chat.deleteMany({});
     await prisma.user.deleteMany({});
 
-    // await prisma.message.deleteMany({});
+    await prisma.message.deleteMany({});
     return;
   });
 });

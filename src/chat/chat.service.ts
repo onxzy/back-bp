@@ -228,18 +228,6 @@ export class ChatService {
 
     const chat = await this.updateChat(id, [], membersToRemove, undefined);
 
-    await this.saveMessages(chat.id, byId, [
-      {
-        body: {
-          type: MessageEventType.MEMBERS_REMOVED,
-          data: {
-            by: byId,
-            membersId: membersToRemove,
-          },
-        },
-      } as NewMessage<'EVENT', MessageEventType.MEMBERS_REMOVED>,
-    ]);
-
     for (const memberToRemoveId of membersToRemove) {
       this.server
         .in(this.buildSocketRoomId(memberToRemoveId, 'uid'))
@@ -252,6 +240,18 @@ export class ChatService {
         action: 'chatDeleted',
       } as const;
     }
+
+    await this.saveMessages(chat.id, byId, [
+      {
+        body: {
+          type: MessageEventType.MEMBERS_REMOVED,
+          data: {
+            by: byId,
+            membersId: membersToRemove,
+          },
+        },
+      } as NewMessage<'EVENT', MessageEventType.MEMBERS_REMOVED>,
+    ]);
 
     return {
       action: 'userRemoved',
